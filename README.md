@@ -13,7 +13,7 @@ If available, you will now receive the Telegram Username (starting with @) that 
 
 If you get an error message this might be due to the following reasons:
 1. The phone number has not been used to create a Telegram account;
-2. The phone number is connected to a Telegram account but the user exists but did not choose a Telegram Username (this is optional on Telegram);
-3. The phone number is connected to a Telegram account but the user has chosen to restrict the option to find him/her via the phone number.
+2. The phone number is connected to a Telegram account and the user exists but did not choose a Telegram Username (this is optional on Telegram);
+3. The phone number is connected to a Telegram account and the user exists but has chosen to restrict the option to find him/her via the phone number.
 4. Other error
 
