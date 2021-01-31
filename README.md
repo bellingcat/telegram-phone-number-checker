@@ -1,9 +1,19 @@
 # Telegram_phone_numbers
 
-You would need the following to use the script.
+This script let's you check whether a specific phone number is connected to a Telegram account.
 
-1. A telegram account with a phone number.
-2. Telegram 'api id' and 'api hash', which you can by creating a developers account on the link: https://my.telegram.org/.
-3. Please put the values of PHONE_NUMBER, API_ID and API_HASH within the script.
-4. Run the script: python3 Telegram_phone_validation.py
+To run it, you need:
+1. A Telegram account with an active phone number;
+2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/.
+
+Insert your PHONE_NUMBER, the API_ID and the API_HASH in the script.
+Then, run the script: python3 Telegram_phone_validation.py
+
+If available, you will now receive the Username (starting with @) that is connected with this number.
+
+If you get an error message this might be due to the following reasons:
+1. The phone number has not been used to create a Telegram account;
+2. The phone number is connected to a Telegram account but the user exists but did not choose a Telegram Username (this is optional on Telegram);
+3. The phone number is connected to a Telegram account but the user has chosen to restrict the option to find him/her via the phone number.
+4. Other error
 
