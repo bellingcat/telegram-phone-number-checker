@@ -1,6 +1,6 @@
 # Telegram_phone_numbers
 
-This script lets you check whether a specific phone number is connected to a Username on Telegram.
+This script lets you check whether a specific phone number is connected to a Telegram account.
 
 To run it, you need:
 
