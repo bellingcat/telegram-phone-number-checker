@@ -5,9 +5,9 @@ from telethon import functions, types
 
 result = {}
 
-PHONE_NUMBER = '+31682321057'
-API_ID = 2551274
-API_HASH = '2e026c92beed662f859144ab5442efcd'
+PHONE_NUMBER = # Enter the telegram account phone number here
+API_ID = # Enter the api id 
+API_HASH = #Enter the api hash
 
 def get_names(phone_number):
     try:
