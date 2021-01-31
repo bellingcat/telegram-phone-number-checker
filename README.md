@@ -9,7 +9,7 @@ To run it, you need:
 Insert your PHONE_NUMBER, the API_ID and the API_HASH in the script.
 Then, run the script: python3 Telegram_phone_validation.py
 
-If available, you will now receive the Username (starting with @) that is connected with this number.
+If available, you will now receive the Telegram Username (starting with @) that is connected with this number.
 
 If you get an error message this might be due to the following reasons:
 1. The phone number has not been used to create a Telegram account;
