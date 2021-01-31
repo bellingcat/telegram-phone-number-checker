@@ -16,7 +16,7 @@ def get_names(phone_number):
         username = contacts.to_dict()['users'][0]['username']
         del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
         if not username:
-            return f'No user name returned by the API for the number: {phone_number}'
+            return f'Response detected, but no user name returned by the API for the number: {phone_number}'
         else:
             return username
     except IndexError as e:
