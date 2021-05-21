@@ -5,14 +5,15 @@ This script lets you check whether a specific phone number is connected to a Tel
 To run it, you need:
 
 1. A Telegram account with an active phone number;
-2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/. Place these values in a .env file:
+2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/. Place these values in a .env file, along with the phone number of your Telegram account:
 
 ```
 API_ID=
 API_HASH=
+PHONE_NUMBER=
 ```
 
-Then, run the script: `python3 telegram-phone-validation.py --phone_number +15558675309`
+Then, run the script: `python3 telegram-phone-validation.py`
 
 You can expect the following possible responses:
 
