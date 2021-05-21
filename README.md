@@ -8,7 +8,8 @@ To run it, you need:
 2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/. Place these values in a .env file:
 
 ```API_ID=
-API_HASH=```
+API_HASH=
+```
 
 Then, run the script: `python3 telegram-phone-validation.py --phone_number +15558675309`
 
