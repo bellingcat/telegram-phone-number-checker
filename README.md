@@ -7,7 +7,8 @@ To run it, you need:
 1. A Telegram account with an active phone number;
 2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/. Place these values in a .env file:
 
-```API_ID=
+```
+API_ID=
 API_HASH=
 ```
 
