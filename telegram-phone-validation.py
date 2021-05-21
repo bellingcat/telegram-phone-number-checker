@@ -2,12 +2,16 @@
 from telethon import TelegramClient, events, sync
 from telethon.tl.types import InputPhoneContact
 from telethon import functions, types
+from dotenv import load_dotenv
+import argparse
+import os
+
+load_dotenv()
 
 result = {}
 
-PHONE_NUMBER = # Enter the telegram account phone number here
-API_ID = # Enter the api id 
-API_HASH = #Enter the api hash
+API_ID = os.getenv('API_ID')
+API_HASH = os.getenv('API_HASH')
 
 def get_names(phone_number):
     try:
@@ -40,10 +44,15 @@ def user_validator():
             
 
 if __name__ == '__main__':
-    client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
+    parser = argparse.ArgumentParser(description='Check to see if a phone number is a valid Telegram account')
+    parser.add_argument('--phone_number', dest='phone_number', action='store', help='Enter the phone number to check')
+
+    args = parser.parse_args()
+
+    client = TelegramClient(args.phone_number, API_ID, API_HASH)
     client.connect()
     if not client.is_user_authorized():
-        client.send_code_request(PHONE_NUMBER)
-        client.sign_in(PHONE_NUMBER, input('Enter the code (sent on telegram): '))
+        client.send_code_request(args.phone_number)
+        client.sign_in(args.phone_number, input('Enter the code (sent on telegram): '))
     user_validator()
     print(result)
