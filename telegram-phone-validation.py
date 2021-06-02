@@ -14,18 +14,22 @@ API_ID = os.getenv('API_ID')
 API_HASH = os.getenv('API_HASH')
 PHONE_NUMBER = os.getenv('PHONE_NUMBER')
 
-def get_names(phone_number):
+def get_names(phone_number):    
     try:
-        contact = InputPhoneContact(client_id = 0, phone = phone_number, first_name="__test__", last_name="__last_test__")
+        contact = InputPhoneContact(client_id = 0, phone = phone_number, first_name="", last_name="")
         contacts = client(functions.contacts.ImportContactsRequest([contact]))
         username = contacts.to_dict()['users'][0]['username']
-        del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
         if not username:
-            return f'Response detected, but no user name returned by the API for the number: {phone_number}'
+            print("*"*5 + f' Response detected, but no user name returned by the API for the number: {phone_number} ' + "*"*5)
+            del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
+            return
         else:
+            del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
             return username
     except IndexError as e:
         return f'ERROR: there was no response for the phone number: {phone_number}'
+    except TypeError as e:
+        return f"TypeError: {e}. --> The error might have occured due to the inability to delete the {phone_number} from the contact list."
     except:
         raise
 
