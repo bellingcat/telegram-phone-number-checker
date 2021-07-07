@@ -13,7 +13,18 @@ API_HASH=
 PHONE_NUMBER=
 ```
 
-Then, run the script: `python3 telegram-phone-validation.py`
+## Installing Dependencies
+
+This project uses [pipenv](https://pipenv.pypa.io/en/latest/#install-pipenv-today) to manage dependencies. Install pipenv on your machine, and then this project's dependencies can be installed like so:
+
+```sh
+pipenv install
+```
+
+## Usage
+```sh
+pipenv run python telegram-phone-validation.py
+```
 
 You can expect the following possible responses:
 
