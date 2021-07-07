@@ -1,10 +1,11 @@
 #!/usr/local/bin/python3
-from telethon import TelegramClient, events, sync
+from telethon import TelegramClient, errors, events, sync
 from telethon.tl.types import InputPhoneContact
 from telethon import functions, types
 from dotenv import load_dotenv
 import argparse
 import os
+from getpass import getpass
 
 load_dotenv()
 
@@ -57,6 +58,10 @@ if __name__ == '__main__':
     client.connect()
     if not client.is_user_authorized():
         client.send_code_request(PHONE_NUMBER)
-        client.sign_in(PHONE_NUMBER, input('Enter the code (sent on telegram): '))
+        try:
+            client.sign_in(PHONE_NUMBER, input('Enter the code (sent on telegram): '))
+        except errors.SessionPasswordNeededError:
+            pw = getpass('Two-Step Verification enabled. Please enter your account password: ')
+            client.sign_in(password=pw)
     user_validator()
     print(result)
