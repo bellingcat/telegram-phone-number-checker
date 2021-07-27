@@ -21,10 +21,10 @@ def get_names(phone_number):
         username = contacts.to_dict()['users'][0]['username']
         if not username:
             print("*"*5 + f' Response detected, but no user name returned by the API for the number: {phone_number} ' + "*"*5)
-            del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
+            client(functions.contacts.DeleteContactsRequest(id=[username]))
             return
         else:
-            del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
+            client(functions.contacts.DeleteContactsRequest(id=[username]))
             return username
     except IndexError as e:
         return f'ERROR: there was no response for the phone number: {phone_number}'
@@ -45,13 +45,14 @@ def user_validator(phone_numbers: list):
     return result
 
 if __name__ == '__main__':
+    # parse argument
     parser = argparse.ArgumentParser(description='Check to see if a phone number is a valid Telegram account')
-    parser.add_argument('-i', dest='input_file_path', help='Path to an optional telephone list .txt file to be used as input')
-    parser.add_argument('--tocsv', action="store_true", 
-                        help='If present, the output will be parsed as a csv. Useful for piping the output into a file [$script -i path --tocsv > output.txt]')
-
+    parser.add_argument('-i', '--input', dest='input_file_path', help='Path to an optional telephone list .txt file to be used as input')
+    parser.add_argument('-o', '--output', dest='output_filename',
+                        help='If present, saves the output to a CSV file with the given filename')
     args = parser.parse_args()
 
+    # Connect
     client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
     client.connect()
     if not client.is_user_authorized():
@@ -76,12 +77,13 @@ if __name__ == '__main__':
         phones = [tlf.strip('\n').replace(' ','') for tlf in input_phones]
 
     result = user_validator(phones)
-    if not args.tocsv:
-        print(result)
+    print(result)
 
-    else:
+    # If we have an output filename, save the csv
+    if args.output_filename:
         csv = "telephone,username\n"
         for phone, username in result.items():
             csv += f"{phone},{username}\n"
 
-        print(csv)
+        with open(args.output_filename, 'w') as output_file:
+            output_file.write(csv)
