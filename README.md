@@ -1,8 +1,10 @@
 # telegram-phone-number-checker
 
+![GitHub](https://img.shields.io/github/license/bellingcat/telegram-phone-number-checker?logo=github&style=for-the-badge) ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/bellingcat/telegram-phone-number-checker?logo=github&style=for-the-badge)
+
 This script lets you check whether a specific phone number is connected to a Telegram account.
 
-To run it, you need:
+To run it, you'll need:
 
 1. A Telegram account with an active phone number;
 2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/. Place these values in a .env file, along with the phone number of your Telegram account:
