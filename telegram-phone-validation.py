@@ -49,11 +49,12 @@ def user_validator():
         raise
             
 
+# Check to see if a phone number is a valid Telegram account
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Check to see if a phone number is a valid Telegram account')
 
     args = parser.parse_args()
-
+# Connecting to the client
     client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
     client.connect()
     if not client.is_user_authorized():
