@@ -5,10 +5,10 @@ description = "Check if phone numbers are connected to Telegram accounts."
 authors = ["Bellingcat"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/python-poetry/poetry"
+repository = "https://github.com/bellingcat/telegram-phone-number-checker"
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/python-poetry/poetry/issues"
+"Bug Tracker" = "https://github.com/bellingcat/telegram-phone-number-checker/issues"
 
 [tool.poetry.scripts]
 telegram-phone-number-checker = "telegram_phone_number_checker.main:main_entrypoint"
