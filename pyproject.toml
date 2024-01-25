@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "telegram-phone-number-checker"
-version = "1.0.1"
+version = "1.0.2"
 description = "Check if phone numbers are connected to Telegram accounts."
 authors = ["Bellingcat"]
 license = "MIT"

@@ -46,7 +46,7 @@ def validate_users(client, phone_numbers):
     The function uses the get_api_response function to first check if the user exists and if it does, then it returns the first user name and the last user name.
     '''
     if not phone_numbers or not len(phone_numbers):
-        phone_numbers = click.prompt('Enter the phone numbers to check, separated by commas')
+        phone_numbers = input('Enter the phone numbers to check, separated by commas: ')
     result = {}
     phones = [p.strip() for p in phone_numbers.split(",")]
     try:
@@ -62,9 +62,9 @@ def validate_users(client, phone_numbers):
 def login(api_id, api_hash, phone_number):
     """Create a telethon session or reuse existing one"""
     print('Logging in...', end="", flush=True)
-    API_ID = api_id or os.getenv('API_ID') or click.prompt('Enter your API ID')
-    API_HASH = api_hash or os.getenv('API_HASH') or click.prompt('Enter your API HASH')
-    PHONE_NUMBER = phone_number or os.getenv('PHONE_NUMBER') or click.prompt('Enter your phone number')
+    API_ID = api_id or os.getenv('API_ID') or input('Enter your API ID: ')
+    API_HASH = api_hash or os.getenv('API_HASH') or input('Enter your API HASH: ')
+    PHONE_NUMBER = phone_number or os.getenv('PHONE_NUMBER') or input('Enter your phone number: ')
     client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
     client.connect()
     if not client.is_user_authorized():
