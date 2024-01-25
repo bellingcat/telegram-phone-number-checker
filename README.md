@@ -1,6 +1,6 @@
 # telegram-phone-number-checker
 
-Python tool/script toc heck if phone numbers are connected to Telegram accounts.
+Python tool/script to check if phone numbers are connected to Telegram accounts. Retrieving username, name, and IDs where available.
 
 ## Installation
 
