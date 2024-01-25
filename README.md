@@ -1,33 +1,93 @@
 # telegram-phone-number-checker
 
-This script lets you check whether a specific phone number is connected to a Telegram account.
+Python tool/script toc heck if phone numbers are connected to Telegram accounts.
 
+## Installation
+
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/telegram-phone-number-checker)](https://pypi.org/project/telegram-phone-number-checker/)
+
+You can install this tool directly from the [official pypi release](https://pypi.org/project/telegram-phone-number-checker/).
+
+```bash
+pip install telegram-phone-number-checker
+```
+
+You can also install it and run it directly from github as a script.
+```bash
+git clone https://github.com/bellingcat/telegram-phone-number-checker
+cd telegram-phone-number-checker
+pip install -r requirements.txt
+python telegram-phone-number-checker/main.py
+```
+
+## Requirements
 To run it, you need:
 
 1. A Telegram account with an active phone number;
-2. Telegram 'API_ID' and 'API_HASH', which you can get by creating a developers account using this link: https://my.telegram.org/. Place these values in a .env file, along with the phone number of your Telegram account:
+2. Telegram `API_ID` and `API_HASH`, which you can get by creating a developers account at https://my.telegram.org/. Place these values in a `.env` file, along with the phone number of your Telegram account:
 
 ```
 API_ID=
 API_HASH=
 PHONE_NUMBER=
 ```
-
-## Installing Dependencies
-
-This project uses [pipenv](https://pipenv.pypa.io/en/latest/#install-pipenv-today) to manage dependencies. Install pipenv on your machine, and then this project's dependencies can be installed like so:
-
-```sh
-pipenv install
-```
+If you don't create this file, you can also provide these 3 values when calling the tool, or even be prompted for them interactively.
 
 ## Usage
-```sh
-pipenv run python telegram-phone-validation.py
+The tool accepts a comma-separated list of phone numbers to check, you can pass this when you call the tool, or interactively.
+
+See the examples below:
+
+```bash
+# single phone number
+telegram-phone-number-checker --phone-numbers +1234567890
+
+# multiple phone numbers
+telegram-phone-number-checker --phone-numbers +1234567890,+9876543210,+111111111
+
+# interactive version, you will be prompted for the phone-numbers
+telegram-phone-number-checker
+
+# overwrite the telegram API keys in .env (or if no .env is found)
+telegram-phone-number-checker --api-id YOUR_API_KEY --api-hash YOUR_API_HASH --api-phone-number YOUR_PHONE_NUMBER --phone-numbers +1234567890
 ```
 
-You can expect the following possible responses:
+The result will be written to the console but also written as JSON to a `results.json` file, you can write it to another file by adding `--output your_filename.json` to the command.
 
-1. If available, you will receive the Telegram Username that is connected with this number.
-2. 'Response detected, but no user name returned by the API for the number: {phone_number}'. This means that it looks like the number was used to create a Telegram account but the user did not choose a Telegram Username. It is optional to create a Username on Telegram.
-3. 'ERROR: there was no response for the phone number: {phone_number}': There can be several reasons for this response. Either the phone number has not been used to create a Telegram account. Or: The phone number is connected to a Telegram account but the user has restricted the option to find him/her via the phone number. Or: another error occurred.
+For each phone number, you can expect the following possible responses:
+
+1. If available, you will receive the Telegram Username,Name, and ID that are connected with this number.
+2. 'no username detected'. This means that it looks like the number was used to create a Telegram account but the user did not choose a Telegram Username. It is optional to create a Username on Telegram.
+3. 'ERROR: no response, the user does not exist or has blocked contact adding.': There can be several reasons for this response. Either the phone number has not been used to create a Telegram account. Or: The phone number is connected to a Telegram account but the user has restricted the option to find him/her via the phone number.
+4. Or: another error occurred.
+
+
+## Development 
+This section describes how to install the project in order to run it locally, for example if you want to build new features.
+
+```bash
+# clone the code
+git clone https://github.com/bellingcat/telegram-phone-number-checker
+
+# move into the project's folder
+cd telegram-phone-number-checker
+```
+
+This project uses [poetry](https://python-poetry.org/) to manage dependencies. You can install dependencies via poetry, or use the up-to-date [requirements.txt](requirements.txt) file.
+
+```bash
+# with poetry
+poetry install
+
+# with pip
+pip install -r requirements.txt
+```
+
+You can then run it with any of these:
+```bash
+# with poetry
+poetry run python3 telegram_phone_number_checker/main.py
+
+# with pip installation
+python3 telegram_phone_number_checker/main.py
+```
