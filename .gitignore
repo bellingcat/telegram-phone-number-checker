@@ -1,2 +1,4 @@
 .env
 *.session
+*.json
+dist/
