@@ -4,7 +4,8 @@ Python tool/script toc heck if phone numbers are connected to Telegram accounts.
 
 ## Installation
 
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/telegram-phone-number-checker)](https://pypi.org/project/telegram-phone-number-checker/)
+[![PyPI - Version](https://img.shields.io/pypi/v/telegram-phone-number-checker)
+](https://pypi.org/project/telegram-phone-number-checker/)
 
 You can install this tool directly from the [official pypi release](https://pypi.org/project/telegram-phone-number-checker/).
 
