@@ -1,7 +1,6 @@
-import os, json
-from telethon.sync import TelegramClient, errors
+import os, json, re
+from telethon.sync import TelegramClient, errors, functions
 from telethon.tl.types import InputPhoneContact
-from telethon import functions
 from dotenv import load_dotenv
 from getpass import getpass
 import click
@@ -48,7 +47,7 @@ def validate_users(client, phone_numbers):
     if not phone_numbers or not len(phone_numbers):
         phone_numbers = input('Enter the phone numbers to check, separated by commas: ')
     result = {}
-    phones = [p.strip() for p in phone_numbers.split(",")]
+    phones = [re.sub(r"\s+", "", p, flags=re.UNICODE) for p in phone_numbers.split(",")]
     try:
         for phone in phones:
             if phone not in result:

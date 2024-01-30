@@ -57,7 +57,7 @@ The result will be written to the console but also written as JSON to a `results
 
 For each phone number, you can expect the following possible responses:
 
-1. If available, you will receive the Telegram Username,Name, and ID that are connected with this number.
+1. If available, you will receive the Telegram Username, Name, and ID that are connected with this number.
 2. 'no username detected'. This means that it looks like the number was used to create a Telegram account but the user did not choose a Telegram Username. It is optional to create a Username on Telegram.
 3. 'ERROR: no response, the user does not exist or has blocked contact adding.': There can be several reasons for this response. Either the phone number has not been used to create a Telegram account. Or: The phone number is connected to a Telegram account but the user has restricted the option to find him/her via the phone number.
 4. Or: another error occurred.
