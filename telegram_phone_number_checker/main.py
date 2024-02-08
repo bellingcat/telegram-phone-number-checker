@@ -1,7 +1,7 @@
 import os, json, re
 from telethon.sync import TelegramClient, errors, functions
 from telethon.tl.types import InputPhoneContact
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values, find_dotenv
 from getpass import getpass
 import click
 
@@ -88,7 +88,7 @@ def show_results(output, res):
 @click.option('--output', help='results filename, default to results.json', default="results.json", type=str)
 def main_entrypoint(phone_numbers, api_id, api_hash, api_phone_number, output):
     """Check to see if one or more phone numbers belong to a valid Telegram account"""
-    load_dotenv()
+    load_dotenv(".env")
     client = login(api_id, api_hash, api_phone_number)
     res =  validate_users(client, phone_numbers)
     show_results(output, res)
