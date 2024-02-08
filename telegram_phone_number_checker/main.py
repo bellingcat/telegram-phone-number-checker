@@ -1,7 +1,7 @@
 import os, json, re
 from telethon.sync import TelegramClient, errors, functions
 from telethon.tl.types import InputPhoneContact
-from dotenv import load_dotenv, dotenv_values, find_dotenv
+from dotenv import load_dotenv
 from getpass import getpass
 import click
 
