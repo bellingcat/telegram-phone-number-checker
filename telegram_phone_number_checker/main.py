@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 from getpass import getpass
 import click
 
-load_dotenv()
-
 def get_names(client, phone_number):
     """
     This function takes in a phone number and returns the username first name and the last name of the user if the user exists. It does so by first adding the user's phones to the contact list, retrieving the information, and then deleting the user from the contact list.
@@ -90,6 +88,7 @@ def show_results(output, res):
 @click.option('--output', help='results filename, default to results.json', default="results.json", type=str)
 def main_entrypoint(phone_numbers, api_id, api_hash, api_phone_number, output):
     """Check to see if one or more phone numbers belong to a valid Telegram account"""
+    load_dotenv()
     client = login(api_id, api_hash, api_phone_number)
     res =  validate_users(client, phone_numbers)
     show_results(output, res)
