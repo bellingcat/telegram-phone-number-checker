@@ -12,23 +12,30 @@ def get_names(client, phone_number):
     result = {}
     print(f'Checking: {phone_number=} ...', end="", flush=True)
     try:
+        # Create a contact
         contact = InputPhoneContact(client_id = 0, phone = phone_number, first_name="", last_name="")
+        # Attempt to add the contact from the address book
         contacts = client(functions.contacts.ImportContactsRequest([contact]))
-        username = contacts.to_dict()['users'][0]['username']
-        if not username:
-            result.update({"error": f'ERROR: no username detected'})
-            del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
-        else:
-            result.update({"username": username})
-            del_usr = client(functions.contacts.DeleteContactsRequest(id=[username]))
-            # getting more information about the user
-            id = del_usr.to_dict()['users'][0]['id']
-            first_name = del_usr.to_dict()['users'][0]['first_name']
-            last_name = del_usr.to_dict()['users'][0]['last_name']
-            result.update({"first_name": first_name, "last_name": last_name, "id": id})
 
-    except IndexError as e:
-        result.update({"error": f'ERROR: no response, the user does not exist or has blocked contact adding.'})
+        users = contacts.to_dict().get('users', [])
+        number_of_matches = len(users)
+
+        if number_of_matches == 0:
+            result.update({"error": f'No response, the phone number is not on Telegram or has blocked contact adding.'})
+        elif number_of_matches == 1:
+            user = users[0] 
+            # Attempt to remove the contact from the address book
+            client(functions.contacts.DeleteContactsRequest(id=[user.get('id')]))
+            # getting more information about the user
+            result.update({
+                "id": user.get('id'),
+                "username": user.get('username'),
+                "first_name": user.get('first_name'),
+                "last_name": user.get('last_name')
+                })
+        else:
+            result.update({"error": f'This phone number matched multiple Telegram accounts, which is unexpected. Please contact the developer: contact-tech@bellingcat.com'})
+
     except TypeError as e:
         result.update({"error": f"TypeError: {e}. --> The error might have occurred due to the inability to delete the {phone_number=} from the contact list."})
     except Exception as e:
