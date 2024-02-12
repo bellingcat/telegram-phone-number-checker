@@ -25,7 +25,7 @@ def get_names(client, phone_number):
         elif number_of_matches == 1:
             user = users[0] 
             # Attempt to remove the contact from the address book
-            client(functions.contacts.DeleteContactsRequest(id=[user['id']]))
+            client(functions.contacts.DeleteContactsRequest(id=[user.get('id')]))
             # getting more information about the user
             result.update({
                 "id": user.get('id'),
