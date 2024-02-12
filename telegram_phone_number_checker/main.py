@@ -17,7 +17,7 @@ def get_names(client, phone_number):
         # Attempt to add the contact from the address book
         contacts = client(functions.contacts.ImportContactsRequest([contact]))
 
-        users = contacts.to_dict()['users']
+        users = contacts.to_dict().get('users', [])
         number_of_matches = len(users)
 
         if number_of_matches == 0:
@@ -28,10 +28,10 @@ def get_names(client, phone_number):
             client(functions.contacts.DeleteContactsRequest(id=[user['id']]))
             # getting more information about the user
             result.update({
-                "id": user['id'],
-                "username": user['username'],
-                "first_name": user['first_name'],
-                "last_name": user['last_name']
+                "id": user.get('id'),
+                "username": user.get('username'),
+                "first_name": user.get('first_name'),
+                "last_name": user.get('last_name')
                 })
         else:
             result.update({"error": f'This phone number matched multiple Telegram accounts, which is unexpected. Please contact the developer: contact-tech@bellingcat.com'})
