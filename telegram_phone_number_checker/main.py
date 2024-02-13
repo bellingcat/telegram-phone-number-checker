@@ -23,9 +23,10 @@ def get_names(client, phone_number):
         if number_of_matches == 0:
             result.update({"error": f'No response, the phone number is not on Telegram or has blocked contact adding.'})
         elif number_of_matches == 1:
-            user = users[0] 
             # Attempt to remove the contact from the address book
-            client(functions.contacts.DeleteContactsRequest(id=[user.get('id')]))
+            # The response from DeleteContactsRequest contains more information than from ImportContactsRequest
+            del_user = client(functions.contacts.DeleteContactsRequest(id=[users[0].get('id')]))
+            user  = del_user.to_dict().get('users')[0]
             # getting more information about the user
             result.update({
                 "id": user.get('id'),
