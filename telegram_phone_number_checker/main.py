@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 from getpass import getpass
 import click
 
-def get_names(client, phone_number):
+def get_names(client: TelegramClient, phone_number: str) -> dict:
     """
-    This function takes in a phone number and returns the username first name and the last name of the user if the user exists. It does so by first adding the user's phones to the contact list, retrieving the information, and then deleting the user from the contact list.
+    Takes in a phone number and returns the associated user information if the user exists. It does so by first adding the user's phones to the contact list, retrieving the information, and then deleting the user from the contact list.
     """
     result = {}
     print(f'Checking: {phone_number=} ...', end="", flush=True)
@@ -46,10 +46,10 @@ def get_names(client, phone_number):
     return result
 
 
-def validate_users(client, phone_numbers):
-    '''
-    The function uses the get_api_response function to first check if the user exists and if it does, then it returns the first user name and the last user name.
-    '''
+def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
+    """
+    Takes in a string of comma separated phone numbers and tries to get the user information associated with each phone number. 
+    """
     if not phone_numbers or not len(phone_numbers):
         phone_numbers = input('Enter the phone numbers to check, separated by commas: ')
     result = {}
@@ -64,7 +64,7 @@ def validate_users(client, phone_numbers):
     return result
 
 
-def login(api_id, api_hash, phone_number):
+def login(api_id: str, api_hash: str, phone_number: str) -> TelegramClient:
     """Create a telethon session or reuse existing one"""
     print('Logging in...', end="", flush=True)
     API_ID = api_id or os.getenv('API_ID') or input('Enter your API ID: ')
@@ -82,7 +82,7 @@ def login(api_id, api_hash, phone_number):
     print("Done.")
     return client
 
-def show_results(output, res):
+def show_results(output: str, res: dict) -> None:
     print(json.dumps(res, indent=4))
     with open(output, 'w') as f:
         json.dump(res, f, indent=4)
@@ -94,7 +94,7 @@ def show_results(output, res):
 @click.option('--api-hash', help='Your API_HASH', type=str)
 @click.option('--api-phone-number', help='Your phone_number', type=str)
 @click.option('--output', help='results filename, default to results.json', default="results.json", type=str)
-def main_entrypoint(phone_numbers, api_id, api_hash, api_phone_number, output):
+def main_entrypoint(phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str) -> None:
     """Check to see if one or more phone numbers belong to a valid Telegram account"""
     load_dotenv(".env")
     client = login(api_id, api_hash, api_phone_number)
