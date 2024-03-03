@@ -95,7 +95,7 @@ def show_results(output: str, res: dict) -> None:
 @click.command(epilog='Check out the docs at github.com/bellingcat/telegram-phone-number-checker for more information.')
 @click.option('--phone-numbers', '-p', help='List of phone numbers to check, separated by commas', type=str)
 @click.option('--api-id', help='Your Telegram app api_id', type=str, prompt="Enter your Telegram App app_id", envvar='API_ID', show_envvar=True)
-@click.option('--api-hash', help='Your Telegram app api_hard', type=str, prompt="Enter your Telegram App api_hash", hide_input=True, envvar='API_HASH', show_envvar=True)
+@click.option('--api-hash', help='Your Telegram app api_hash', type=str, prompt="Enter your Telegram App api_hash", hide_input=True, envvar='API_HASH', show_envvar=True)
 @click.option('--api-phone-number', help='Your phone number', type=str, prompt="Enter the number associated with your Telegram account", envvar='PHONE_NUMBER', show_envvar=True)
 @click.option('--output', help='Filename to store results', default="results.json", show_default=True, type=str)
 def main_entrypoint(phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str) -> None:
@@ -110,7 +110,7 @@ def main_entrypoint(phone_numbers: str, api_id: str, api_hash: str, api_phone_nu
 
     \b
     Note:
-    If you do not want to enter you API ID, API hash, or phone number associated with
+    If you do not want to enter the API ID, API hash, or phone number associated with
     your Telegram account on the command line, you can store these values in a `.env`
     file located within the same directory you run this command from.
 
