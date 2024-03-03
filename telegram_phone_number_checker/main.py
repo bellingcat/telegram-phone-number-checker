@@ -92,14 +92,43 @@ def show_results(output: str, res: dict) -> None:
         print(f"Results saved to {output}")
 
 
-@click.command()
+@click.command(epilog='Check out the docs at github.com/bellingcat/telegram-phone-number-checker for more information.')
 @click.option('--phone-numbers', '-p', help='List of phone numbers to check, separated by commas', type=str)
-@click.option('--api-id', help='Your API_ID', type=str, envvar='API_ID')
-@click.option('--api-hash', help='Your API_HASH', type=str, envvar='API_HASH')
-@click.option('--api-phone-number', help='Your phone number', type=str, envvar='PHONE_NUMBER')
+@click.option('--api-id', help='Your Telegram app api_id', type=str, prompt="Enter your Telegram App app_id", envvar='API_ID', show_envvar=True)
+@click.option('--api-hash', help='Your Telegram app api_hard', type=str, prompt="Enter your Telegram App api_hash", hide_input=True, envvar='API_HASH', show_envvar=True)
+@click.option('--api-phone-number', help='Your phone number', type=str, prompt="Enter the number associated with your Telegram account", envvar='PHONE_NUMBER', show_envvar=True)
 @click.option('--output', help='Filename to store results', default="results.json", show_default=True, type=str)
 def main_entrypoint(phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str) -> None:
-    """Check to see if one or more phone numbers belong to a valid Telegram account."""
+    """
+    Check to see if one or more phone numbers belong to a valid Telegram account.
+
+    \b
+    Prerequisites:
+    1. A Telegram account with an active phone number
+    2. A Telegram App api_id and App api_hash, which you can get by creating
+       a Telegram App @ https://my.telegram.org/apps
+
+    \b
+    Note:
+    If you do not want to enter you API ID, API hash, or phone number associated with
+    your Telegram account on the command line, you can store these values in a `.env`
+    file located within the same directory you run this command from.
+
+    \b
+    // .env file example:
+    API_ID=12345678
+    API_HASH=1234abcd5678efgh1234abcd567
+    PHONE_NUMBER=+15555555555
+
+    See the official Telegram docs at https://core.telegram.org/api/obtaining_api_id for more information on obtaining an API ID.
+
+    \b
+    Recommendations:
+    Telegram recommends entering phone numbers in international format
+    +(country code)(city or carrier code)(your number)
+    i.e. +491234567891
+
+    """
     client = login(api_id, api_hash, api_phone_number)
     res = validate_users(client, phone_numbers)
     show_results(output, res)
