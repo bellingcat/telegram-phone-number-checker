@@ -92,8 +92,8 @@ def show_results(output: str, res: dict) -> None:
 @click.option('--phone-numbers', '-p', help='List of phone numbers to check, separated by commas', type=str)
 @click.option('--api-id', help='Your API_ID', type=str)
 @click.option('--api-hash', help='Your API_HASH', type=str)
-@click.option('--api-phone-number', help='Your phone_number', type=str)
-@click.option('--output', help='results filename, default to results.json', default="results.json", type=str)
+@click.option('--api-phone-number', help='Your phone number', type=str)
+@click.option('--output', help='Filename to store results', default="results.json", show_default=True, type=str)
 def main_entrypoint(phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str) -> None:
     """Check to see if one or more phone numbers belong to a valid Telegram account"""
     load_dotenv(".env")
