@@ -13,7 +13,7 @@ You can install this tool directly from the [official pypi release](https://pypi
 pip install telegram-phone-number-checker
 ```
 
-You can also install it and run it directly from github as a script.
+You can also install it and run it directly from GitHub as a script.
 ```bash
 git clone https://github.com/bellingcat/telegram-phone-number-checker
 cd telegram-phone-number-checker
