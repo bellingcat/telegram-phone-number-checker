@@ -32,7 +32,17 @@ def get_names(client: TelegramClient, phone_number: str) -> dict:
                 "id": user.get('id'),
                 "username": user.get('username'),
                 "first_name": user.get('first_name'),
-                "last_name": user.get('last_name')
+                "last_name": user.get('last_name'),
+                "fake" : user.get('fake'),
+                "verified" : user.get('verified'),
+                "premium" : user.get('premium'),
+                "mutual_contact" : user.get('mutual_contact'),
+                "bot" : user.get('bot'),
+                "bot_chat_history" : user.get('bot_chat_history'),
+                "restricted" : user.get('restricted'),
+                "restriction_reason" : user.get('restriction_reason'),
+                "Was online": user.get('status', {}).get('was_online').strftime("%Y-%m-%d %H:%M:%S %Z") if user.get('status') and user.get('status', {}).get('was_online') else None
+
                 })
         else:
             result.update({"error": f'This phone number matched multiple Telegram accounts, which is unexpected. Please contact the developer: contact-tech@bellingcat.com'})
