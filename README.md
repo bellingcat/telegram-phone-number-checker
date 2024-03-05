@@ -13,7 +13,7 @@ You can install this tool directly from the [official pypi release](https://pypi
 pip install telegram-phone-number-checker
 ```
 
-You can also install it and run it directly from github as a script.
+You can also install it and run it directly from GitHub as a script.
 ```bash
 git clone https://github.com/bellingcat/telegram-phone-number-checker
 cd telegram-phone-number-checker
@@ -77,6 +77,9 @@ cd telegram-phone-number-checker
 This project uses [poetry](https://python-poetry.org/) to manage dependencies. You can install dependencies via poetry, or use the up-to-date [requirements.txt](requirements.txt) file.
 
 ```bash
+# install poetry if you haven't already
+pip install poetry
+
 # with poetry
 poetry install
 
@@ -87,7 +90,7 @@ pip install -r requirements.txt
 You can then run it with any of these:
 ```bash
 # with poetry
-poetry run python3 telegram_phone_number_checker/main.py
+poetry run telegram-phone-number-checker
 
 # with pip installation
 python3 telegram_phone_number_checker/main.py
