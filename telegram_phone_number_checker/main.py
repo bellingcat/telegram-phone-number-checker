@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 from getpass import getpass
 import click
 
+
+load_dotenv()
+
 def get_names(client: TelegramClient, phone_number: str) -> dict:
     """
     Takes in a phone number and returns the associated user information if the user exists. It does so by first adding the user's phones to the contact list, retrieving the information, and then deleting the user from the contact list.
@@ -74,7 +77,7 @@ def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     return result
 
 
-def login(api_id: str, api_hash: str, phone_number: str) -> TelegramClient:
+def login(api_id: str | None, api_hash: str | None, phone_number: str | None) -> TelegramClient:
     """Create a telethon session or reuse existing one"""
     print('Logging in...', end="", flush=True)
     API_ID = api_id or os.getenv('API_ID') or input('Enter your API ID: ')
@@ -98,17 +101,46 @@ def show_results(output: str, res: dict) -> None:
         json.dump(res, f, indent=4)
         print(f"Results saved to {output}")
 
-@click.command()
+
+@click.command(epilog='Check out the docs at github.com/bellingcat/telegram-phone-number-checker for more information.')
 @click.option('--phone-numbers', '-p', help='List of phone numbers to check, separated by commas', type=str)
-@click.option('--api-id', help='Your API_ID', type=str)
-@click.option('--api-hash', help='Your API_HASH', type=str)
-@click.option('--api-phone-number', help='Your phone_number', type=str)
-@click.option('--output', help='results filename, default to results.json', default="results.json", type=str)
+@click.option('--api-id', help='Your Telegram app api_id', type=str, prompt="Enter your Telegram App app_id", envvar='API_ID', show_envvar=True)
+@click.option('--api-hash', help='Your Telegram app api_hash', type=str, prompt="Enter your Telegram App api_hash", hide_input=True, envvar='API_HASH', show_envvar=True)
+@click.option('--api-phone-number', help='Your phone number', type=str, prompt="Enter the number associated with your Telegram account", envvar='PHONE_NUMBER', show_envvar=True)
+@click.option('--output', help='Filename to store results', default="results.json", show_default=True, type=str)
 def main_entrypoint(phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str) -> None:
-    """Check to see if one or more phone numbers belong to a valid Telegram account"""
-    load_dotenv(".env")
+    """
+    Check to see if one or more phone numbers belong to a valid Telegram account.
+
+    \b
+    Prerequisites:
+    1. A Telegram account with an active phone number
+    2. A Telegram App api_id and App api_hash, which you can get by creating
+       a Telegram App @ https://my.telegram.org/apps
+
+    \b
+    Note:
+    If you do not want to enter the API ID, API hash, or phone number associated with
+    your Telegram account on the command line, you can store these values in a `.env`
+    file located within the same directory you run this command from.
+
+    \b
+    // .env file example:
+    API_ID=12345678
+    API_HASH=1234abcd5678efgh1234abcd567
+    PHONE_NUMBER=+15555555555
+
+    See the official Telegram docs at https://core.telegram.org/api/obtaining_api_id for more information on obtaining an API ID.
+
+    \b
+    Recommendations:
+    Telegram recommends entering phone numbers in international format
+    +(country code)(city or carrier code)(your number)
+    i.e. +491234567891
+
+    """
     client = login(api_id, api_hash, api_phone_number)
-    res =  validate_users(client, phone_numbers)
+    res = validate_users(client, phone_numbers)
     show_results(output, res)
 
 
