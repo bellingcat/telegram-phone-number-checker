@@ -2,3 +2,4 @@
 *.session
 *.json
 dist/
+__pycache__/
