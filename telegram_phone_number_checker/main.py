@@ -30,7 +30,7 @@ def get_names(client: TelegramClient, phone_number: str) -> dict:
         users = contacts.to_dict().get("users", [])
         number_of_matches = len(users)
 
-        if number_of_matches == 0:
+        if not users:
             result.update(
                 {
                     "error": "No response, the phone number is not on Telegram or has blocked contact adding."
@@ -105,31 +105,6 @@ def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     return result
 
 
-def login(
-    api_id: str | None, api_hash: str | None, phone_number: str | None
-) -> TelegramClient:
-    """Create a telethon session or reuse existing one"""
-    print("Logging in...", end="", flush=True)
-    API_ID = api_id or os.getenv("API_ID") or input("Enter your API ID: ")
-    API_HASH = api_hash or os.getenv("API_HASH") or input("Enter your API HASH: ")
-    PHONE_NUMBER = (
-        phone_number or os.getenv("PHONE_NUMBER") or input("Enter your phone number: ")
-    )
-    client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
-    client.connect()
-    if not client.is_user_authorized():
-        client.send_code_request(PHONE_NUMBER)
-        try:
-            client.sign_in(PHONE_NUMBER, input("Enter the code (sent on telegram): "))
-        except errors.SessionPasswordNeededError:
-            pw = getpass(
-                "Two-Step Verification enabled. Please enter your account password: "
-            )
-            client.sign_in(password=pw)
-    print("Done.")
-    return client
-
-
 def show_results(output: str, res: dict) -> None:
     print(json.dumps(res, indent=4))
     with open(output, "w") as f:
@@ -149,7 +124,7 @@ def show_results(output: str, res: dict) -> None:
 @click.option(
     "--api-id",
     help="Your Telegram app api_id",
-    type=str,
+    type=int,
     prompt="Enter your Telegram App app_id",
     envvar="API_ID",
     show_envvar=True,
@@ -179,7 +154,7 @@ def show_results(output: str, res: dict) -> None:
     type=str,
 )
 def main_entrypoint(
-    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str
+    phone_numbers: str, api_id: int, api_hash: str, api_phone_number: str, output: str
 ) -> None:
     """
     Check to see if one or more phone numbers belong to a valid Telegram account.
@@ -212,9 +187,10 @@ def main_entrypoint(
     i.e. +491234567891
 
     """
-    client = login(api_id, api_hash, api_phone_number)
-    res = validate_users(client, phone_numbers)
-    show_results(output, res)
+    client = TelegramClient(api_phone_number, api_id, api_hash)
+    with client:
+        res = validate_users(client, phone_numbers)
+        show_results(output, res)
 
 
 if __name__ == "__main__":
