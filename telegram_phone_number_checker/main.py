@@ -1,8 +1,10 @@
+import asyncio
 import os
 import json
 import re
 from telethon.sync import TelegramClient, errors, functions
-from telethon.tl.types import InputPhoneContact
+from telethon.tl.functions.users import GetFullUserRequest
+from telethon.tl.types import InputPhoneContact, TypeUserStatus, UserStatusLastWeek, UserStatusEmpty,UserStatusRecently, UserStatusOnline, UserStatusLastMonth, UserStatusOffline
 from dotenv import load_dotenv
 from getpass import getpass
 import click
@@ -10,99 +12,57 @@ import click
 
 load_dotenv()
 
+def get_human_readable_status(status: TypeUserStatus):
+    match status:
+        case UserStatusEmpty():
+            return "Unknown"
+        case UserStatusOnline():
+            return "Currently online"
+        case UserStatusOffline():
+            return status.was_online.strftime("%Y-%m-%d %H:%M:%S %Z")
+        case UserStatusRecently():
+            return "Last seen recently"
+        case UserStatusLastWeek():
+            return "Last seen last week"
+        case UserStatusLastMonth():
+            return "Last seen last month"
+        case _:
+            return "Unknown status returned"
 
-def get_user_info(client: TelegramClient, phone_number: str) -> dict:
-    """Take in a phone number and returns the associated user information if the user exists.
 
-    It does so by first adding the user's phones to the contact list, retrieving the
-    information, and then deleting the user from the contact list.
-    """
+async def get_user_info(client: TelegramClient, phone_number: str) -> dict:
+    """Take in a phone number and returns the associated user information if the user exists."""
     result = {}
     print(f"Checking: {phone_number=} ...", end="", flush=True)
-    try:
-        # Create a contact
-        contact = InputPhoneContact(
-            client_id=0, phone=phone_number, first_name="", last_name=""
-        )
-        # Attempt to add the contact from the address book
-        contacts = client(functions.contacts.ImportContactsRequest([contact]))
-
-        users = contacts.to_dict().get("users", [])
-        number_of_matches = len(users)
-
-        if not users:
-            result.update(
-                {
-                    "error": "No response, the phone number is not on Telegram or has blocked contact adding."
-                }
-            )
-        elif number_of_matches == 1:
-            # Attempt to remove the contact from the address book.
-            # The response from DeleteContactsRequest contains more information than from ImportContactsRequest
-            del_user = client(
-                functions.contacts.DeleteContactsRequest(id=[users[0].get("id")])
-            )
-            user = del_user.to_dict().get("users")[0]
-            user_was_online = user.get("status", {}).get("was_online")
-            # getting more information about the user
-            result.update(
-                {
-                    "id": user.get("id"),
-                    "username": user.get("username"),
-                    "first_name": user.get("first_name"),
-                    "last_name": user.get("last_name"),
-                    "fake": user.get("fake"),
-                    "verified": user.get("verified"),
-                    "premium": user.get("premium"),
-                    "mutual_contact": user.get("mutual_contact"),
-                    "bot": user.get("bot"),
-                    "bot_chat_history": user.get("bot_chat_history"),
-                    "restricted": user.get("restricted"),
-                    "restriction_reason": user.get("restriction_reason"),
-                    "user_was_online": (
-                        user_was_online.strftime("%Y-%m-%d %H:%M:%S %Z")
-                        if user_was_online
-                        else None
-                    ),
-                }
-            )
-        else:
-            result.update(
-                {
-                    "error": """This phone number matched multiple Telegram accounts, 
-            which is unexpected. Please contact the developer: contact-tech@bellingcat.com"""
-                }
-            )
-
-    except TypeError as e:
-        result.update(
-            {
-                "error": f"TypeError: {e}. --> The error might have occurred due to the inability to delete the {phone_number=} from the contact list."
-            }
-        )
-    except Exception as e:
-        result.update({"error": f"Unexpected error: {e}."})
-        raise
-    print("Done.")
-    return result
+    peer_id = await client.get_peer_id(phone_number)
+    user = (await client(GetFullUserRequest(peer_id))).users[0]
+    return {
+        "id": peer_id,
+        "username": user.username,
+        "usernames": user.usernames,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "fake": user.fake,
+        "verified": user.verified,
+        "premium": user.premium,
+        "mutual_contact": user.mutual_contact,
+        "bot": user.bot,
+        "bot_chat_history": user.bot_chat_history,
+        "restricted": user.restricted,
+        "restriction_reason": user.restriction_reason,
+        "user_was_online": get_human_readable_status(user.status),
+        "deleted": user.deleted,
+    }
 
 
-def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
+async def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     """
     Take in a string of comma separated phone numbers and try to get the user information associated with each phone number.
     """
     if not phone_numbers or not len(phone_numbers):
         phone_numbers = input("Enter the phone numbers to check, separated by commas: ")
-    result = {}
-    phones = [re.sub(r"\s+", "", p, flags=re.UNICODE) for p in phone_numbers.split(",")]
-    try:
-        for phone in phones:
-            if phone not in result:
-                result[phone] = get_user_info(client, phone)
-    except Exception as e:
-        print(e)
-        raise
-    return result
+    phones = {re.sub(r"\s+", "", p, flags=re.UNICODE) for p in phone_numbers.split(",")}
+    return {phone: await get_user_info(client, phone) for phone in phones}
 
 
 def show_results(output: str, res: dict) -> None:
@@ -197,9 +157,13 @@ def main_entrypoint(
     i.e. +491234567891
 
     """
-    client = TelegramClient(api_phone_number, api_id, api_hash)
-    with client.start(phone=api_phone_number, password=api_phone_password):
-        res = validate_users(client, phone_numbers)
+    asyncio.run(run_program(api_phone_number, api_phone_password, api_id, api_hash, phone_numbers, output))
+
+
+async def run_program(api_phone_number, api_phone_password, api_id, api_hash, phone_numbers, output):
+    async with TelegramClient(api_phone_number, api_id, api_hash) as client:
+        await client.start(phone=api_phone_number, password=api_phone_password)
+        res = await validate_users(client, phone_numbers)
         show_results(output, res)
 
 
