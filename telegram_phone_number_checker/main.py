@@ -11,7 +11,7 @@ import click
 load_dotenv()
 
 
-def get_names(client: TelegramClient, phone_number: str) -> dict:
+def get_user_info(client: TelegramClient, phone_number: str) -> dict:
     """Take in a phone number and returns the associated user information if the user exists.
 
     It does so by first adding the user's phones to the contact list, retrieving the
@@ -98,7 +98,7 @@ def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     try:
         for phone in phones:
             if phone not in result:
-                result[phone] = get_names(client, phone)
+                result[phone] = get_user_info(client, phone)
     except Exception as e:
         print(e)
         raise
@@ -147,6 +147,15 @@ def show_results(output: str, res: dict) -> None:
     show_envvar=True,
 )
 @click.option(
+    "--api-phone-password",
+    help="The password for your Telegram account",
+    type=str,
+    prompt="Enter the password associated with your Telegram account",
+    hide_input=True,
+    envvar="PASSWORD",
+    show_envvar=True,
+)
+@click.option(
     "--output",
     help="Filename to store results",
     default="results.json",
@@ -154,7 +163,7 @@ def show_results(output: str, res: dict) -> None:
     type=str,
 )
 def main_entrypoint(
-    phone_numbers: str, api_id: int, api_hash: str, api_phone_number: str, output: str
+    phone_numbers: str, api_id: int, api_hash: str, api_phone_number: str, api_phone_password: str, output: str
 ) -> None:
     """
     Check to see if one or more phone numbers belong to a valid Telegram account.
@@ -167,15 +176,16 @@ def main_entrypoint(
 
     \b
     Note:
-    If you do not want to enter the API ID, API hash, or phone number associated with
-    your Telegram account on the command line, you can store these values in a `.env`
-    file located within the same directory you run this command from.
+    If you do not want to enter the API ID, API hash, phone number, or password
+    associated with your Telegram account on the command line, you can store these
+    values in a `.env` file located within the same directory you run this command from.
 
     \b
     // .env file example:
     API_ID=12345678
     API_HASH=1234abcd5678efgh1234abcd567
     PHONE_NUMBER=+15555555555
+    PASSWORD=mmyy_+ppaasssswwoorrdd$
 
     See the official Telegram docs at https://core.telegram.org/api/obtaining_api_id
     for more information on obtaining an API ID.
@@ -188,7 +198,7 @@ def main_entrypoint(
 
     """
     client = TelegramClient(api_phone_number, api_id, api_hash)
-    with client:
+    with client.start(phone=api_phone_number, password=api_phone_password):
         res = validate_users(client, phone_numbers)
         show_results(output, res)
 
