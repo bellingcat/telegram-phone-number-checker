@@ -28,6 +28,9 @@ telethon = "1.33.1"
 typing-extensions = "4.9.0"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -4,7 +4,7 @@ anyio==4.2.0 ; python_version >= "3.9" and python_version < "4.0" \
 click==8.1.7 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28 \
     --hash=sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
-colorama==0.4.6 ; python_version >= "3.9" and python_version < "4.0" and platform_system == "Windows" \
+colorama==0.4.6 ; python_version >= "3.9" and python_version < "4.0" and (platform_system == "Windows" or sys_platform == "win32") \
     --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 \
     --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
 exceptiongroup==1.2.0 ; python_version >= "3.9" and python_version < "4.0" \
@@ -13,11 +13,23 @@ exceptiongroup==1.2.0 ; python_version >= "3.9" and python_version < "4.0" \
 idna==3.6 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca \
     --hash=sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f
+iniconfig==2.0.0 ; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
+    --hash=sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
+packaging==24.0 ; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5 \
+    --hash=sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9
+pluggy==1.4.0 ; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981 \
+    --hash=sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be
 pyaes==1.6.1 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f
 pyasn1==0.5.1 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:4439847c58d40b1d0a573d07e3856e95333f1976294494c325775aeca506eb58 \
     --hash=sha256:6d391a96e59b23130a5cfa74d6fd7f388dbbe26cc8f1edf39fdddf08d9d6676c
+pytest==8.1.1 ; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:2a8386cfc11fa9d2c50ee7b2a57e7d898ef90470a7a34c4b949ff59662bb78b7 \
+    --hash=sha256:ac978141a75948948817d360297b7aae0fcb9d6ff6bc9ec6d514b85d5a65c044
 python-dotenv==1.0.1 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca \
     --hash=sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a
@@ -29,6 +41,9 @@ sniffio==1.3.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:eecefdce1e5bbfb7ad2eeaabf7c1eeb404d7757c379bd1f7e5cce9d8bf425384
 telethon==1.33.1 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:377107d77fd95f8c2bd7fce77f9d78da84c1ff58023f59e8d06035a4548bd36b
+tomli==2.0.1 ; python_version >= "3.9" and python_version < "3.11" \
+    --hash=sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc \
+    --hash=sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f
 typing-extensions==4.9.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:23478f88c37f27d76ac8aee6c905017a143b0b1b886c3c9f66bc2fd94f9f5783 \
     --hash=sha256:af72aea155e91adfc61c3ae9e0e342dbc0cba726d6cba4b6c72c1f34e47291cd
