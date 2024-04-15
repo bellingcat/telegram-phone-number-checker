@@ -245,6 +245,7 @@ async def run_program(
     client = await login(api_id, api_hash, api_phone_number)
     res = await validate_users(client, phone_numbers)
     show_results(output, res)
+    client.disconnect()
 
 
 if __name__ == "__main__":
