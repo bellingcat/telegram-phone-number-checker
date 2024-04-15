@@ -1,17 +1,34 @@
-import os
+import asyncio
 import json
+import os
 import re
-from telethon.sync import TelegramClient, errors, functions
-from telethon.tl.types import InputPhoneContact
-from dotenv import load_dotenv
 from getpass import getpass
-import click
 
+import click
+from dotenv import load_dotenv
+from telethon.sync import TelegramClient, errors, functions
+from telethon.tl import types
 
 load_dotenv()
 
 
-def get_names(client: TelegramClient, phone_number: str) -> dict:
+def get_human_readable_user_status(status: types.TypeUserStatus):
+    match status:
+        case types.UserStatusOnline():
+            return "Currently online"
+        case types.UserStatusOffline():
+            return status.was_online.strftime("%Y-%m-%d %H:%M:%S %Z")
+        case types.UserStatusRecently():
+            return "Last seen recently"
+        case types.UserStatusLastWeek():
+            return "Last seen last week"
+        case types.UserStatusLastMonth():
+            return "Last seen last month"
+        case _:
+            return "Unknown"
+
+
+async def get_names(client: TelegramClient, phone_number: str) -> dict:
     """Take in a phone number and returns the associated user information if the user exists.
 
     It does so by first adding the user's phones to the contact list, retrieving the
@@ -21,11 +38,11 @@ def get_names(client: TelegramClient, phone_number: str) -> dict:
     print(f"Checking: {phone_number=} ...", end="", flush=True)
     try:
         # Create a contact
-        contact = InputPhoneContact(
+        contact = types.InputPhoneContact(
             client_id=0, phone=phone_number, first_name="", last_name=""
         )
         # Attempt to add the contact from the address book
-        contacts = client(functions.contacts.ImportContactsRequest([contact]))
+        contacts = await client(functions.contacts.ImportContactsRequest([contact]))
 
         users = contacts.to_dict().get("users", [])
         number_of_matches = len(users)
@@ -39,31 +56,28 @@ def get_names(client: TelegramClient, phone_number: str) -> dict:
         elif number_of_matches == 1:
             # Attempt to remove the contact from the address book.
             # The response from DeleteContactsRequest contains more information than from ImportContactsRequest
-            del_user = client(
+            updates_response: types.Updates = await client(
                 functions.contacts.DeleteContactsRequest(id=[users[0].get("id")])
             )
-            user = del_user.to_dict().get("users")[0]
-            user_was_online = user.get("status", {}).get("was_online")
+            user = updates_response.users[0]
             # getting more information about the user
             result.update(
                 {
-                    "id": user.get("id"),
-                    "username": user.get("username"),
-                    "first_name": user.get("first_name"),
-                    "last_name": user.get("last_name"),
-                    "fake": user.get("fake"),
-                    "verified": user.get("verified"),
-                    "premium": user.get("premium"),
-                    "mutual_contact": user.get("mutual_contact"),
-                    "bot": user.get("bot"),
-                    "bot_chat_history": user.get("bot_chat_history"),
-                    "restricted": user.get("restricted"),
-                    "restriction_reason": user.get("restriction_reason"),
-                    "user_was_online": (
-                        user_was_online.strftime("%Y-%m-%d %H:%M:%S %Z")
-                        if user_was_online
-                        else None
-                    ),
+                    "id": user.id,
+                    "username": user.username,
+                    "usernames": user.usernames,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "fake": user.fake,
+                    "verified": user.verified,
+                    "premium": user.premium,
+                    "mutual_contact": user.mutual_contact,
+                    "bot": user.bot,
+                    "bot_chat_history": user.bot_chat_history,
+                    "restricted": user.restricted,
+                    "restriction_reason": user.restriction_reason,
+                    "user_was_online": get_human_readable_user_status(user.status),
+                    "phone": user.phone,
                 }
             )
         else:
@@ -87,7 +101,7 @@ def get_names(client: TelegramClient, phone_number: str) -> dict:
     return result
 
 
-def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
+async def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     """
     Take in a string of comma separated phone numbers and try to get the user information associated with each phone number.
     """
@@ -98,14 +112,14 @@ def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     try:
         for phone in phones:
             if phone not in result:
-                result[phone] = get_names(client, phone)
+                result[phone] = await get_names(client, phone)
     except Exception as e:
         print(e)
         raise
     return result
 
 
-def login(
+async def login(
     api_id: str | None, api_hash: str | None, phone_number: str | None
 ) -> TelegramClient:
     """Create a telethon session or reuse existing one"""
@@ -116,16 +130,18 @@ def login(
         phone_number or os.getenv("PHONE_NUMBER") or input("Enter your phone number: ")
     )
     client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
-    client.connect()
-    if not client.is_user_authorized():
-        client.send_code_request(PHONE_NUMBER)
+    await client.connect()
+    if not await client.is_user_authorized():
+        await client.send_code_request(PHONE_NUMBER)
         try:
-            client.sign_in(PHONE_NUMBER, input("Enter the code (sent on telegram): "))
+            await client.sign_in(
+                PHONE_NUMBER, input("Enter the code (sent on telegram): ")
+            )
         except errors.SessionPasswordNeededError:
             pw = getpass(
                 "Two-Step Verification enabled. Please enter your account password: "
             )
-            client.sign_in(password=pw)
+            await client.sign_in(password=pw)
     print("Done.")
     return client
 
@@ -212,9 +228,24 @@ def main_entrypoint(
     i.e. +491234567891
 
     """
-    client = login(api_id, api_hash, api_phone_number)
-    res = validate_users(client, phone_numbers)
+    asyncio.run(
+        run_program(
+            phone_numbers,
+            api_id,
+            api_hash,
+            api_phone_number,
+            output,
+        )
+    )
+
+
+async def run_program(
+    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str
+):
+    client = await login(api_id, api_hash, api_phone_number)
+    res = await validate_users(client, phone_numbers)
     show_results(output, res)
+    client.disconnect()
 
 
 if __name__ == "__main__":

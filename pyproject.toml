@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "telegram-phone-number-checker"
-version = "1.1.0"
+version = "1.2.0"
 description = "Check if phone numbers are connected to Telegram accounts."
 authors = ["Bellingcat"]
 license = "MIT"
@@ -28,6 +28,16 @@ telethon = "1.33.1"
 typing-extensions = "4.9.0"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+black = "24.3.0"
+isort = "^5.13.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

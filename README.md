@@ -95,3 +95,23 @@ poetry run telegram-phone-number-checker
 # with pip installation
 python3 telegram_phone_number_checker/main.py
 ```
+
+### Generating `requirements.txt` & `requirements-dev.txt`
+
+Poetry is used to generate both of these files. `requirements.txt` contains only those dependencies necessary for
+running the CLI. `requirements-dev.txt` contains all dependencies including those used for running tests, linters, etc.
+
+To generate `requirements.txt`:
+
+```shell
+poetry export --output=requirements.txt --without-urls
+```
+
+To generate `requirements-dev.txt`:
+
+```shell
+poetry export --output=requirements-dev.txt --without-urls --with=dev
+```
+
+💡 `--without-urls` is for users who install from their own private package repository
+instead of pypi.org
