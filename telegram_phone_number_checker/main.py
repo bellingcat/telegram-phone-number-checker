@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import re
+import time
 from getpass import getpass
 
 import click
@@ -11,6 +12,8 @@ from telethon.tl import types
 
 load_dotenv()
 
+BATCH_SIZE = 50  # Number of phone numbers processed each time
+DELAY_SECONDS = 10  # Delay time after each batch is processed
 
 def get_human_readable_user_status(status: types.TypeUserStatus):
     match status:
@@ -26,7 +29,6 @@ def get_human_readable_user_status(status: types.TypeUserStatus):
             return "Last seen last month"
         case _:
             return "Unknown"
-
 
 async def get_names(client: TelegramClient, phone_number: str) -> dict:
     """Take in a phone number and returns the associated user information if the user exists.
@@ -100,15 +102,12 @@ async def get_names(client: TelegramClient, phone_number: str) -> dict:
     print("Done.")
     return result
 
-
-async def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
+async def validate_users(client: TelegramClient, phone_numbers: list) -> dict:
     """
-    Take in a string of comma separated phone numbers and try to get the user information associated with each phone number.
+    Take in a list of phone numbers and try to get the user information associated with each phone number.
     """
-    if not phone_numbers or not len(phone_numbers):
-        phone_numbers = input("Enter the phone numbers to check, separated by commas: ")
     result = {}
-    phones = [re.sub(r"\s+", "", p, flags=re.UNICODE) for p in phone_numbers.split(",")]
+    phones = [re.sub(r"\s+", "", p, flags=re.UNICODE) for p in phone_numbers]
     try:
         for phone in phones:
             if phone not in result:
@@ -117,7 +116,6 @@ async def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
         print(e)
         raise
     return result
-
 
 async def login(
     api_id: str | None, api_hash: str | None, phone_number: str | None
@@ -145,13 +143,11 @@ async def login(
     print("Done.")
     return client
 
-
 def show_results(output: str, res: dict) -> None:
     print(json.dumps(res, indent=4))
     with open(output, "w") as f:
         json.dump(res, f, indent=4)
         print(f"Results saved to {output}")
-
 
 @click.command(
     epilog="Check out the docs at github.com/bellingcat/telegram-phone-number-checker for more information."
@@ -194,8 +190,15 @@ def show_results(output: str, res: dict) -> None:
     show_default=True,
     type=str,
 )
+@click.option(
+    "--input-file",
+    help="Input file containing phone numbers",
+    default="phone-numbers.txt",
+    show_default=True,
+    type=str,
+)
 def main_entrypoint(
-    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str
+    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str, input_file: str
 ) -> None:
     """
     Check to see if one or more phone numbers belong to a valid Telegram account.
@@ -235,18 +238,31 @@ def main_entrypoint(
             api_hash,
             api_phone_number,
             output,
+            input_file
         )
     )
 
-
 async def run_program(
-    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str
+    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str, input_file: str
 ):
-    client = await login(api_id, api_hash, api_phone_number)
-    res = await validate_users(client, phone_numbers)
-    show_results(output, res)
-    client.disconnect()
+    # Read phone numbers from file if phone_numbers is not provided
+    if not phone_numbers:
+        with open(input_file, 'r') as file:
+            phone_numbers = file.read().strip().split('\n')
+    else:
+        phone_numbers = phone_numbers.split(',')
 
+    client = await login(api_id, api_hash, api_phone_number)
+    result = {}
+
+    for i in range(0, len(phone_numbers), BATCH_SIZE):
+        batch = phone_numbers[i:i + BATCH_SIZE]
+        batch_result = await validate_users(client, batch)
+        result.update(batch_result)
+        time.sleep(DELAY_SECONDS)  # Delay to avoid triggering rate limits
+
+    show_results(output, result)
+    await client.disconnect()
 
 if __name__ == "__main__":
     main_entrypoint()
