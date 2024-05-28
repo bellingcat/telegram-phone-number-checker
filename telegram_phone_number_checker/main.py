@@ -83,7 +83,7 @@ async def get_names(client: TelegramClient, phone_number: str) -> dict:
         else:
             result.update(
                 {
-                    "error": """This phone number matched multiple Telegram accounts, 
+                    "error": """This phone number matched multiple Telegram accounts,
             which is unexpected. Please contact the developer: contact-tech@bellingcat.com"""
                 }
             )
@@ -105,8 +105,6 @@ async def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     """
     Take in a string of comma separated phone numbers and try to get the user information associated with each phone number.
     """
-    if not phone_numbers or not len(phone_numbers):
-        phone_numbers = input("Enter the phone numbers to check, separated by commas: ")
     result = {}
     phones = [re.sub(r"\s+", "", p, flags=re.UNICODE) for p in phone_numbers.split(",")]
     try:
@@ -119,23 +117,16 @@ async def validate_users(client: TelegramClient, phone_numbers: str) -> dict:
     return result
 
 
-async def login(
-    api_id: str | None, api_hash: str | None, phone_number: str | None
-) -> TelegramClient:
+async def login(api_id: str, api_hash: str, phone_number: str) -> TelegramClient:
     """Create a telethon session or reuse existing one"""
     print("Logging in...", end="", flush=True)
-    API_ID = api_id or os.getenv("API_ID") or input("Enter your API ID: ")
-    API_HASH = api_hash or os.getenv("API_HASH") or input("Enter your API HASH: ")
-    PHONE_NUMBER = (
-        phone_number or os.getenv("PHONE_NUMBER") or input("Enter your phone number: ")
-    )
-    client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
+    client = TelegramClient(phone_number, api_id, api_hash)
     await client.connect()
     if not await client.is_user_authorized():
-        await client.send_code_request(PHONE_NUMBER)
+        await client.send_code_request(phone_number)
         try:
             await client.sign_in(
-                PHONE_NUMBER, input("Enter the code (sent on telegram): ")
+                phone_number, input("Enter the code (sent on telegram): ")
             )
         except errors.SessionPasswordNeededError:
             pw = getpass(
@@ -161,6 +152,7 @@ def show_results(output: str, res: dict) -> None:
     "-p",
     help="List of phone numbers to check, separated by commas",
     type=str,
+    required=True,
 )
 @click.option(
     "--api-id",
@@ -228,6 +220,15 @@ def main_entrypoint(
     i.e. +491234567891
 
     """
+    if not api_id:
+        api_id = os.getenv("API_ID") or input("Enter your API ID: ")
+
+    if not api_hash:
+        api_hash = os.getenv("API_HASH") or input("Enter your API HASH: ")
+
+    if not api_phone_number:
+        api_phone_number = os.getenv("PHONE_NUMBER") or input("Enter your phone number: ")
+
     asyncio.run(
         run_program(
             phone_numbers,
