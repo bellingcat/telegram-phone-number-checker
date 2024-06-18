@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from pathlib import Path
 import re
 from getpass import getpass
 
@@ -10,7 +11,7 @@ from telethon.sync import TelegramClient, errors, functions
 from telethon.tl import types
 
 load_dotenv()
-
+download_profile_photos = False
 
 def get_human_readable_user_status(status: types.TypeUserStatus):
     match status:
@@ -80,6 +81,16 @@ async def get_names(client: TelegramClient, phone_number: str) -> dict:
                     "phone": user.phone,
                 }
             )
+        global DOWNLOAD_PROFILE_PHOTOS
+        if DOWNLOAD_PROFILE_PHOTOS is True:
+            photo_output_path = Path("{}_{}_photo.jpeg".format(user.id, user.phone))
+            print("Attempting to download profile photo for {} ({})".format(user.id, user.phone))
+            photo = await client.download_profile_photo(user, file=photo_output_path, download_big=True)
+            if photo is not None:
+                print("Downloaded photo at '{}'".format(photo))
+            else:
+                print("No photo found for {} ({})".format(user.id, user.phone))
+
         else:
             result.update(
                 {
@@ -194,8 +205,15 @@ def show_results(output: str, res: dict) -> None:
     show_default=True,
     type=str,
 )
+@click.option(
+    "--download-profile-photos",
+    help="Download the user profile photo associated with requested Telegram account",
+    is_flag=True,  
+    default=False,
+    show_default=True,
+)
 def main_entrypoint(
-    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str
+        phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str, download_profile_photos: bool
 ) -> None:
     """
     Check to see if one or more phone numbers belong to a valid Telegram account.
@@ -235,14 +253,18 @@ def main_entrypoint(
             api_hash,
             api_phone_number,
             output,
+            download_profile_photos,
         )
     )
 
 
 async def run_program(
-    phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str
+        phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str, download_profile_photos: bool
 ):
     client = await login(api_id, api_hash, api_phone_number)
+    # TODO : It's a bit silly using global state for this; if the script grows further, might be nice to have a simpel 'TelegramClient' class
+    global DOWNLOAD_PROFILE_PHOTOS
+    DOWNLOAD_PROFILE_PHOTOS = download_profile_photos
     res = await validate_users(client, phone_numbers)
     show_results(output, res)
     client.disconnect()
@@ -250,3 +272,4 @@ async def run_program(
 
 if __name__ == "__main__":
     main_entrypoint()
+
