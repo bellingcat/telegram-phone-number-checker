@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
+
 def get_human_readable_user_status(status: types.TypeUserStatus):
     match status:
         case types.UserStatusOnline():
@@ -31,7 +32,9 @@ def get_human_readable_user_status(status: types.TypeUserStatus):
             return "Unknown"
 
 
-async def get_names(client: TelegramClient, phone_number: str, download_profile_photos: bool = False) -> dict:
+async def get_names(
+    client: TelegramClient, phone_number: str, download_profile_photos: bool = False
+) -> dict:
     """Take in a phone number and returns the associated user information if the user exists.
 
     It does so by first adding the user's phones to the contact list, retrieving the
@@ -90,16 +93,28 @@ async def get_names(client: TelegramClient, phone_number: str, download_profile_
         if download_profile_photos is True:
             try:
                 photo_output_path = Path("{}_{}_photo.jpeg".format(user.id, user.phone))
-                logging.info("Attempting to download profile photo for %s (%s)", str(user.id), str(user.phone))
-                photo = await client.download_profile_photo(user, file=photo_output_path, download_big=True)
+                logging.info(
+                    "Attempting to download profile photo for %s (%s)",
+                    str(user.id),
+                    str(user.phone),
+                )
+                photo = await client.download_profile_photo(
+                    user, file=photo_output_path, download_big=True
+                )
                 if photo is not None:
                     logging.info("Downloaded photo at '%s'", photo)
                 else:
-                    logging.info("No photo found for %s (%s)", str(user.id), str(user.phone))
+                    logging.info(
+                        "No photo found for %s (%s)", str(user.id), str(user.phone)
+                    )
             # We don't want the script to fail if download I/O fails locally, file format error, etc.
             # TODO : Add handling for ind. exceptions
             except Exception as e:
-                logging.exception("---\nUnable to download profile photo for %s. Exception provided below.\n---\n%s\n---\n", str(user.phone), str(e))
+                logging.exception(
+                    "---\nUnable to download profile photo for %s. Exception provided below.\n---\n%s\n---\n",
+                    str(user.phone),
+                    str(e),
+                )
 
         else:
             result.update(
@@ -122,7 +137,9 @@ async def get_names(client: TelegramClient, phone_number: str, download_profile_
     return result
 
 
-async def validate_users(client: TelegramClient, phone_numbers: str, download_profile_photos: bool) -> dict:
+async def validate_users(
+    client: TelegramClient, phone_numbers: str, download_profile_photos: bool
+) -> dict:
     """
     Take in a string of comma separated phone numbers and try to get the user information associated with each phone number.
     """
@@ -168,7 +185,7 @@ async def login(
 
 
 def show_results(output: str, res: dict) -> None:
-    print(json.dumps(res, indent=4))
+    logging.info(json.dumps(res, indent=4))
     with open(output, "w") as f:
         json.dump(res, f, indent=4)
         logging.info(f"Results saved to {output}")
@@ -218,12 +235,17 @@ def show_results(output: str, res: dict) -> None:
 @click.option(
     "--download-profile-photos",
     help="Download the user profile photo associated with requested Telegram account",
-    is_flag=True,  
+    is_flag=True,
     default=False,
     show_default=True,
 )
 def main_entrypoint(
-        phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str, download_profile_photos: bool
+    phone_numbers: str,
+    api_id: str,
+    api_hash: str,
+    api_phone_number: str,
+    output: str,
+    download_profile_photos: bool,
 ) -> None:
     """
     Check to see if one or more phone numbers belong to a valid Telegram account.
@@ -269,7 +291,12 @@ def main_entrypoint(
 
 
 async def run_program(
-        phone_numbers: str, api_id: str, api_hash: str, api_phone_number: str, output: str, download_profile_photos: bool = False
+    phone_numbers: str,
+    api_id: str,
+    api_hash: str,
+    api_phone_number: str,
+    output: str,
+    download_profile_photos: bool = False,
 ):
     """
     Get all args passed from Click parser, pass them into the script.
