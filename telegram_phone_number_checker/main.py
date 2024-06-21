@@ -90,32 +90,32 @@ async def get_names(
                     "phone": user.phone,
                 }
             )
-        if download_profile_photos is True:
-            try:
-                photo_output_path = Path("{}_{}_photo.jpeg".format(user.id, user.phone))
-                logging.info(
-                    "Attempting to download profile photo for %s (%s)",
-                    str(user.id),
-                    str(user.phone),
-                )
-                photo = await client.download_profile_photo(
-                    user, file=photo_output_path, download_big=True
-                )
-                if photo is not None:
-                    logging.info("Downloaded photo at '%s'", photo)
-                else:
+            if download_profile_photos is True:
+                try:
+                    photo_output_path = Path("{}_{}_photo.jpeg".format(user.id, phone_number))
                     logging.info(
-                        "No photo found for %s (%s)", str(user.id), str(user.phone)
+                        "Attempting to download profile photo for %s (%s)",
+                        str(user.id),
+                        str(phone_number),
                     )
-            # We don't want the script to fail if download I/O fails locally, file format error, etc.
-            # TODO : Add handling for ind. exceptions
-            except Exception as e:
-                logging.exception(
-                    "---\nUnable to download profile photo for %s. Exception provided below.\n---\n%s\n---\n",
-                    str(user.phone),
-                    str(e),
-                )
-
+                    photo = await client.download_profile_photo(
+                        user, file=photo_output_path, download_big=True
+                    )
+                    if photo is not None:
+                        logging.info("Downloaded photo at '%s'", photo)
+                    else:
+                        logging.info(
+                            "No photo found for %s (%s)", str(user.id), str(phone_number)
+                        )
+                # We don't want the script to fail if download I/O fails locally, file format error, etc.
+                # TODO : Add handling for ind. exceptions
+                except Exception as e:
+                    logging.exception(
+                        "---\nUnable to download profile photo for %s. Exception provided below.\n---\n%s\n---\n",
+                        str(phone_number),
+                        str(e),
+                    )
+    
         else:
             result.update(
                 {
