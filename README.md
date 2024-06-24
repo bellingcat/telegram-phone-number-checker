@@ -43,6 +43,9 @@ See the examples below:
 # single phone number
 telegram-phone-number-checker --phone-numbers +1234567890
 
+# single phone number, download profile photo
+telegram-phone-number-checker --phone-numbers +1234567890 --download-profile-photos
+
 # multiple phone numbers
 telegram-phone-number-checker --phone-numbers +1234567890,+9876543210,+111111111
 
