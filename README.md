@@ -6,6 +6,8 @@
 
 Python tool/script to check if phone numbers are connected to Telegram accounts. Retrieving username, name, and IDs where available.
 
+> ⚠️ NB: We advise you **not to use your personal account** for automations as telegram may block it. A fresh account works best from residential IPs rather than known VPN IPs.
+ 
 ## Installation
 
 [![PyPI - Version](https://img.shields.io/pypi/v/telegram-phone-number-checker)
