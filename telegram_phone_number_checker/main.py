@@ -8,13 +8,33 @@ import logging
 
 import click
 from dotenv import load_dotenv
+import uvicorn
 from telethon.sync import TelegramClient, errors, functions
 from telethon.tl import types
+
+from fastapi import FastAPI, HTTPException
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
+app = FastAPI(
+    title="Telegram Phone Number Checker",
+    description="An API that checks if a given phone number is associated with a user in Telegram",
+    version="1.0.0",
+)
+
+@app.get("/get_user_info")
+async def get_user_info(api_id: str, api_hash: str, phone_number: str, check_number: str):
+    try:
+        client = await login(api_id, api_hash, phone_number)
+        result = await get_names(client, check_number)
+        await client.disconnect()
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 def get_human_readable_user_status(status: types.TypeUserStatus):
     match status:
@@ -199,31 +219,32 @@ def show_results(output: str, res: dict) -> None:
     "-p",
     help="List of phone numbers to check, separated by commas",
     type=str,
+    required=False
 )
 @click.option(
     "--api-id",
     help="Your Telegram app api_id",
     type=str,
-    prompt="Enter your Telegram App app_id",
     envvar="API_ID",
     show_envvar=True,
+    required=False
 )
 @click.option(
     "--api-hash",
     help="Your Telegram app api_hash",
     type=str,
-    prompt="Enter your Telegram App api_hash",
     hide_input=True,
     envvar="API_HASH",
     show_envvar=True,
+    required=False
 )
 @click.option(
     "--api-phone-number",
     help="Your phone number",
     type=str,
-    prompt="Enter the number associated with your Telegram account",
     envvar="PHONE_NUMBER",
     show_envvar=True,
+    required=False
 )
 @click.option(
     "--output",
@@ -231,6 +252,7 @@ def show_results(output: str, res: dict) -> None:
     default="results.json",
     show_default=True,
     type=str,
+    required=False
 )
 @click.option(
     "--download-profile-photos",
@@ -238,14 +260,35 @@ def show_results(output: str, res: dict) -> None:
     is_flag=True,
     default=False,
     show_default=True,
+    required=False
 )
+@click.option(
+    "--use-api",
+    help="Start the FastAPI server to expose this program as an API",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    required=False
+)
+@click.option(
+    "--api-port",
+    help="Port to run the FastAPI server on (default: 8000)",
+    default=8000,
+    type=int,
+    show_default=True,
+    required=False
+)
+@click.pass_context
 def main_entrypoint(
+    ctx,
     phone_numbers: str,
     api_id: str,
     api_hash: str,
     api_phone_number: str,
     output: str,
     download_profile_photos: bool,
+    use_api: bool = False,
+    api_port: int = 8000
 ) -> None:
     """
     Check to see if one or more phone numbers belong to a valid Telegram account.
@@ -278,6 +321,18 @@ def main_entrypoint(
     i.e. +491234567891
 
     """
+    if use_api:
+        logging.info(f"Starting FastAPI server on port {api_port}...")
+        uvicorn.run(app, host="0.0.0.0", port=api_port)
+        ctx.exit()
+    if not phone_numbers:
+        phone_numbers = click.prompt("Enter the phone numbers to check, separated by commas")
+    if not api_id:
+        api_id = click.prompt("Enter your Telegram App api_id")
+    if not api_hash:
+        api_hash = click.prompt("Enter your Telegram App api_hash", hide_input=True)
+    if not api_phone_number:
+        api_phone_number = click.prompt("Enter the number associated with your Telegram account")
     asyncio.run(
         run_program(
             phone_numbers,
