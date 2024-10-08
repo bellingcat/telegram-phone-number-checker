@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 import json
 import os
 from pathlib import Path
@@ -18,10 +19,25 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Connect to the Telegram API
+    client = await login(
+        app.state.api_id,
+        app.state.api_hash,
+        app.state.phone_number,
+    )
+    app.state.client = client
+    try:
+        yield
+    finally:
+        await client.disconnect()
+
 app = FastAPI(
     title="Telegram Phone Number Checker",
     description="An API that checks if a given phone number is associated with a user in Telegram",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 @app.get("/get_user_info")
