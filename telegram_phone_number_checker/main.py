@@ -241,26 +241,26 @@ def show_results(output: str, res: dict) -> None:
     "--api-id",
     help="Your Telegram app api_id",
     type=str,
+    prompt="Enter your Telegram App app_id",
     envvar="API_ID",
-    show_envvar=True,
-    required=False
+    show_envvar=True
 )
 @click.option(
     "--api-hash",
     help="Your Telegram app api_hash",
     type=str,
+    prompt="Enter your Telegram App api_hash",
     hide_input=True,
     envvar="API_HASH",
-    show_envvar=True,
-    required=False
+    show_envvar=True
 )
 @click.option(
     "--api-phone-number",
     help="Your phone number",
     type=str,
+    prompt="Enter the number associated with your Telegram account",
     envvar="PHONE_NUMBER",
-    show_envvar=True,
-    required=False
+    show_envvar=True
 )
 @click.option(
     "--output",
@@ -338,17 +338,14 @@ def main_entrypoint(
 
     """
     if use_api:
+        app.state.api_id = api_id
+        app.state.api_hash = api_hash
+        app.state.phone_number = api_phone_number
         logging.info(f"Starting FastAPI server on port {api_port}...")
         uvicorn.run(app, host="0.0.0.0", port=api_port)
         ctx.exit()
     if not phone_numbers:
         phone_numbers = click.prompt("Enter the phone numbers to check, separated by commas")
-    if not api_id:
-        api_id = click.prompt("Enter your Telegram App api_id")
-    if not api_hash:
-        api_hash = click.prompt("Enter your Telegram App api_hash", hide_input=True)
-    if not api_phone_number:
-        api_phone_number = click.prompt("Enter the number associated with your Telegram account")
     asyncio.run(
         run_program(
             phone_numbers,
