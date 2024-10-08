@@ -71,6 +71,48 @@ For each phone number, you can expect the following possible responses:
 3. 'ERROR: no response, the user does not exist or has blocked contact adding.': There can be several reasons for this response. Either the phone number has not been used to create a Telegram account. Or: The phone number is connected to a Telegram account but the user has restricted the option to find him/her via the phone number.
 4. Or: another error occurred.
 
+## API Usage
+
+You can also expose this tool as an API using FastAPI. To start the API, use the following command:
+
+```bash
+telegram-phone-number-checker --use-api
+```
+
+By default, the API will run on port 8000, but you can specify a different port:
+
+```bash
+telegram-phone-number-checker --use-api --api-port 8080
+```
+
+### API Endpoints
+
+```curl
+GET /get_user_info?check_number=+1234567890
+```
+
+Response body:
+
+```json
+{
+  "id": 123456789,
+  "username": "example_user",
+  "usernames": null,
+  "first_name": "John",
+  "last_name": "Doe",
+  "fake": false,
+  "verified": false,
+  "premium": false,
+  "mutual_contact": true,
+  "bot": false,
+  "bot_chat_history": false,
+  "restricted": false,
+  "restriction_reason": null,
+  "user_was_online": "2024-10-07 12:34:56 UTC",
+  "phone": "+1234567890"
+}
+```
+
 
 ## Development 
 This section describes how to install the project in order to run it locally, for example if you want to build new features.
