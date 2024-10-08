@@ -41,9 +41,9 @@ app = FastAPI(
 )
 
 @app.get("/get_user_info")
-async def get_user_info(api_id: str, api_hash: str, phone_number: str, check_number: str):
+async def get_user_info(check_number: str):
     try:
-        client = await login(api_id, api_hash, phone_number)
+        client = app.state.client
         result = await get_names(client, check_number)
         await client.disconnect()
         if "error" in result:
