@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 from getpass import getpass
 import logging
+from typing import Optional
 
 import click
 from dotenv import load_dotenv
@@ -17,20 +18,18 @@ load_dotenv()
 
 
 def get_human_readable_user_status(status: types.TypeUserStatus):
-    match status:
-        case types.UserStatusOnline():
-            return "Currently online"
-        case types.UserStatusOffline():
-            return status.was_online.strftime("%Y-%m-%d %H:%M:%S %Z")
-        case types.UserStatusRecently():
-            return "Last seen recently"
-        case types.UserStatusLastWeek():
-            return "Last seen last week"
-        case types.UserStatusLastMonth():
-            return "Last seen last month"
-        case _:
-            return "Unknown"
-
+    if isinstance(status, types.UserStatusOnline):
+        return "Currently online"
+    elif isinstance(status, types.UserStatusOffline):
+        return status.was_online.strftime("%Y-%m-%d %H:%M:%S %Z")
+    elif isinstance(status, types.UserStatusRecently):
+        return "Last seen recently"
+    elif isinstance(status, types.UserStatusLastWeek):
+        return "Last seen last week"
+    elif isinstance(status, types.UserStatusLastMonth):
+        return "Last seen last month"
+    else:
+        return "Unknown"
 
 async def get_names(
     client: TelegramClient, phone_number: str, download_profile_photos: bool = False
@@ -158,7 +157,7 @@ async def validate_users(
 
 
 async def login(
-    api_id: str | None, api_hash: str | None, phone_number: str | None
+    api_id: Optional[str], api_hash: Optional[str], phone_number: Optional[str]
 ) -> TelegramClient:
     """Create a telethon session or reuse existing one"""
     logging.info("Logging in...")
