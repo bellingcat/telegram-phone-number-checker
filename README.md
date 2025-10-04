@@ -41,6 +41,8 @@ PHONE_NUMBER=
 If you don't create this file, you can also provide these 3 values when calling the tool, or even be prompted for them interactively.
 
 ## Usage
+
+### Search by phone number
 The tool accepts a comma-separated list of phone numbers to check, you can pass this when you call the tool, or interactively.
 
 See the examples below:
@@ -62,14 +64,32 @@ telegram-phone-number-checker
 telegram-phone-number-checker --api-id YOUR_API_KEY --api-hash YOUR_API_HASH --api-phone-number YOUR_PHONE_NUMBER --phone-numbers +1234567890
 ```
 
+### Search by Username
+You can also search by Telegram username(s):
+
+```bash
+# single username
+telegram-phone-number-checker --usernames john
+
+# multiple usernames
+telegram-phone-number-checker --usernames john,jane
+
+# combine phone numbers and usernames
+telegram-phone-number-checker --phone-numbers +1234567890 --usernames johndoe
+
+# with profile photo download
+telegram-phone-number-checker --usernames johndoe --download-profile-photos
+```
+
 The result will be written to the console but also written as JSON to a `results.json` file, you can write it to another file by adding `--output your_filename.json` to the command.
 
-For each phone number, you can expect the following possible responses:
+For each phone number or username, you can expect the following possible responses:
 
 1. If available, you will receive the Telegram Username, Name, and ID that are connected with this number.
 2. 'no username detected'. This means that it looks like the number was used to create a Telegram account but the user did not choose a Telegram Username. It is optional to create a Username on Telegram.
 3. 'ERROR: no response, the user does not exist or has blocked contact adding.': There can be several reasons for this response. Either the phone number has not been used to create a Telegram account. Or: The phone number is connected to a Telegram account but the user has restricted the option to find him/her via the phone number.
-4. Or: another error occurred.
+4. For username searches: The username may not exist, or it may belong to a channel/group rather than a user account. In the latter case, an output such as '@group_name is a channel or supergroup ('Group'), not a user account. This tool is for searching user accounts only'
+5. Or: another error occurred.
 
 
 ## Development 
