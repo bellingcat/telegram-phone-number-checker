@@ -75,7 +75,7 @@ async def get_names(
                 {
                     "id": user.id,
                     "username": user.username,
-                    "usernames": user.usernames,
+                    "usernames": [u.username for u in (user.usernames or [])] if user.usernames else None,
                     "first_name": user.first_name,
                     "last_name": user.last_name,
                     "fake": user.fake,
@@ -137,6 +137,104 @@ async def get_names(
     return result
 
 
+async def get_user_by_username(
+    client: TelegramClient, username: str, download_profile_photos: bool = False
+) -> dict:
+    """Take in a username and returns the associated user information if the user exists.
+
+    Uses Telegram's get_entity to look up users by their username.
+    ---
+    client, TelegramClient : Telegram client used to generate API call(s)
+    username, str : Username to search (with or without @ symbol, e.g. 'username' or '@username')
+    download_profile_photos, bool : Flag for whether to download a profile's associated account photo; defaults to False.
+    """
+    result = {}
+    # Remove @ symbol if present
+    clean_username = username.lstrip('@')
+    logging.info(f"Checking username: @{clean_username} ...")
+    
+    try:
+        # Get entity by username
+        entity = await client.get_entity(clean_username)
+        
+        # Check if it's a User (not a Channel or Chat)
+        if isinstance(entity, types.User):
+            result.update(
+                {
+                    "id": entity.id,
+                    "username": entity.username,
+                    "usernames": [u.username for u in (entity.usernames or [])] if entity.usernames else None,
+                    "first_name": entity.first_name,
+                    "last_name": entity.last_name,
+                    "fake": entity.fake,
+                    "verified": entity.verified,
+                    "premium": entity.premium,
+                    "mutual_contact": entity.mutual_contact,
+                    "bot": entity.bot,
+                    "bot_chat_history": entity.bot_chat_history,
+                    "restricted": entity.restricted,
+                    "restriction_reason": entity.restriction_reason,
+                    "user_was_online": get_human_readable_user_status(entity.status),
+                    "phone": entity.phone,
+                }
+            )
+            
+            if download_profile_photos is True:
+                try:
+                    photo_output_path = Path(f"{entity.id}_{clean_username}_photo.jpeg")
+                    logging.info(
+                        "Attempting to download profile photo for @%s (%s)",
+                        clean_username,
+                        str(entity.id),
+                    )
+                    photo = await client.download_profile_photo(
+                        entity, file=photo_output_path, download_big=True
+                    )
+                    if photo is not None:
+                        logging.info("Downloaded photo at '%s'", photo)
+                    else:
+                        logging.info(
+                            "No photo found for @%s (%s)", clean_username, str(entity.id)
+                        )
+                except Exception as e:
+                    logging.exception(
+                        "---\nUnable to download profile photo for @%s. Exception provided below.\n---\n%s\n---\n",
+                        clean_username,
+                        str(e),
+                    )
+        elif isinstance(entity, types.Channel):
+            result.update(
+                {
+                    "error": f"@{clean_username} is a channel or supergroup ('{entity.title}'), not a user account. This tool is for searching user accounts only."
+                }
+            )
+        elif isinstance(entity, types.Chat):
+            result.update(
+                {
+                    "error": f"@{clean_username} is a group chat ('{entity.title}'), not a user account. This tool is for searching user accounts only."
+                }
+            )
+        else:
+            result.update(
+                {
+                    "error": f"@{clean_username} returned an unexpected entity type: {type(entity).__name__}"
+                }
+            )
+            
+    except errors.UsernameNotOccupiedError:
+        result.update({"error": f"Username @{clean_username} does not exist on Telegram."})
+    except errors.UsernameInvalidError:
+        result.update({"error": f"Username @{clean_username} is invalid."})
+    except ValueError as e:
+        result.update({"error": f"Could not find username @{clean_username}: {e}"})
+    except Exception as e:
+        result.update({"error": f"Unexpected error while searching for @{clean_username}: {e}."})
+        raise
+    
+    logging.info("Done.")
+    return result
+
+
 async def validate_users(
     client: TelegramClient, phone_numbers: str, download_profile_photos: bool
 ) -> dict:
@@ -151,6 +249,26 @@ async def validate_users(
         for phone in phones:
             if phone not in result:
                 result[phone] = await get_names(client, phone, download_profile_photos)
+    except Exception as e:
+        logging.error(e)
+        raise
+    return result
+
+
+async def validate_usernames(
+    client: TelegramClient, usernames: str, download_profile_photos: bool
+) -> dict:
+    """
+    Take in a string of comma separated usernames and try to get the user information associated with each username.
+    """
+    if not usernames or not len(usernames):
+        usernames = input("Enter the usernames to check, separated by commas: ")
+    result = {}
+    username_list = [re.sub(r"\s+", "", u, flags=re.UNICODE) for u in usernames.split(",")]
+    try:
+        for username in username_list:
+            if username not in result:
+                result[username] = await get_user_by_username(client, username, download_profile_photos)
     except Exception as e:
         logging.error(e)
         raise
@@ -201,6 +319,12 @@ def show_results(output: str, res: dict) -> None:
     type=str,
 )
 @click.option(
+    "--usernames",
+    "-u",
+    help="List of usernames to check, separated by commas (e.g. 'username' or '@username')",
+    type=str,
+)
+@click.option(
     "--api-id",
     help="Your Telegram app api_id",
     type=str,
@@ -241,6 +365,7 @@ def show_results(output: str, res: dict) -> None:
 )
 def main_entrypoint(
     phone_numbers: str,
+    usernames: str,
     api_id: str,
     api_hash: str,
     api_phone_number: str,
@@ -248,7 +373,7 @@ def main_entrypoint(
     download_profile_photos: bool,
 ) -> None:
     """
-    Check to see if one or more phone numbers belong to a valid Telegram account.
+    Check to see if one or more phone numbers or usernames belong to a valid Telegram account.
 
     \b
     Prerequisites:
@@ -281,6 +406,7 @@ def main_entrypoint(
     asyncio.run(
         run_program(
             phone_numbers,
+            usernames,
             api_id,
             api_hash,
             api_phone_number,
@@ -292,6 +418,7 @@ def main_entrypoint(
 
 async def run_program(
     phone_numbers: str,
+    usernames: str,
     api_id: str,
     api_hash: str,
     api_phone_number: str,
@@ -302,8 +429,32 @@ async def run_program(
     Get all args passed from Click parser, pass them into the script.
     """
     client = await login(api_id, api_hash, api_phone_number)
-    res = await validate_users(client, phone_numbers, download_profile_photos)
-    show_results(output, res)
+    
+    results = {}
+    
+    # Search by phone numbers if provided
+    if phone_numbers:
+        phone_results = await validate_users(client, phone_numbers, download_profile_photos)
+        results.update(phone_results)
+    
+    # Search by usernames if provided
+    if usernames:
+        username_results = await validate_usernames(client, usernames, download_profile_photos)
+        results.update(username_results)
+    
+    # If neither provided, prompt for input
+    if not phone_numbers and not usernames:
+        choice = input("Search by (p)hone numbers or (u)sernames? [p/u]: ").lower()
+        if choice == 'u':
+            usernames = input("Enter the usernames to check, separated by commas: ")
+            username_results = await validate_usernames(client, usernames, download_profile_photos)
+            results.update(username_results)
+        else:
+            phone_numbers = input("Enter the phone numbers to check, separated by commas: ")
+            phone_results = await validate_users(client, phone_numbers, download_profile_photos)
+            results.update(phone_results)
+    
+    show_results(output, results)
     client.disconnect()
 
 
