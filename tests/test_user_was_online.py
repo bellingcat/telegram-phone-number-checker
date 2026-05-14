@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from telethon.tl import types
 
-from telegram_phone_number_checker import main
+from telegram_phone_number_checker import get_human_readable_user_status
 
 
 @pytest.mark.parametrize(
@@ -23,4 +23,4 @@ from telegram_phone_number_checker import main
     ],
 )
 def test_should_return_correct_status_string(user_status, readable_string):
-    assert main.get_human_readable_user_status(user_status) == readable_string
+    assert get_human_readable_user_status(user_status) == readable_string

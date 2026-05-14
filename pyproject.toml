@@ -11,7 +11,7 @@ repository = "https://github.com/bellingcat/telegram-phone-number-checker"
 "Bug Tracker" = "https://github.com/bellingcat/telegram-phone-number-checker/issues"
 
 [tool.poetry.scripts]
-telegram-phone-number-checker = "telegram_phone_number_checker.main:main_entrypoint"
+telegram-phone-number-checker = "telegram_phone_number_checker.cli:main_entrypoint"
 
 [tool.poetry.dependencies]
 python = "^3.9"
