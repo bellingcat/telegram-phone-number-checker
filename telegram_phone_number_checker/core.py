@@ -1,9 +1,8 @@
 import logging
-import os
 from getpass import getpass
 
 from dotenv import load_dotenv
-from telethon.sync import TelegramClient, errors, functions
+from telethon import TelegramClient, errors, functions
 
 from telegram_phone_number_checker.output_file import show_results
 from telegram_phone_number_checker.validation import validate_usernames, validate_users
@@ -16,11 +15,9 @@ async def login(
     api_id: str | None, api_hash: str | None, phone_number: str | None
 ) -> TelegramClient:
     logging.info("Logging in...")
-    api_id = api_id or os.getenv("API_ID") or input("Enter your API ID: ")
-    api_hash = api_hash or os.getenv("API_HASH") or input("Enter your API HASH: ")
-    phone_number = (
-        phone_number or os.getenv("PHONE_NUMBER") or input("Enter your phone number: ")
-    )
+    assert api_id is not None
+    assert api_hash is not None
+    assert phone_number is not None
     client = TelegramClient(phone_number, api_id, api_hash)
     await client.connect()
     if not await client.is_user_authorized():
