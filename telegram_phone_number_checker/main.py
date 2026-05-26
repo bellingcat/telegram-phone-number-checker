@@ -251,9 +251,9 @@ async def get_user_by_username(
                 }
             )
     except FloodWaitError as e:
-        logging.warning("FloodWait: ждём %d секунд...", e.seconds)
+        logging.warning("FloodWait: wait %d seconds...", e.seconds)
         await asyncio.sleep(e.seconds)
-        result.update({"error": f"FloodWait {e.seconds}s, попробуйте позже."})
+        result.update({"error": f"FloodWait {e.seconds}s, try later."})
     except errors.UsernameNotOccupiedError:
         result.update({"error": f"Username @{clean_username} does not exist on Telegram."})
     except errors.UsernameInvalidError:
@@ -299,7 +299,7 @@ async def validate_usernames(
         for username in username_list:
             if username not in result:
                 result[username] = await get_user_by_username(client, username, download_profile_photos)
-                await asyncio.sleep(2)  # пауза 2 секунды между запросами
+                await asyncio.sleep(2)
     except Exception as e:
         logging.error(e)
         raise
@@ -453,8 +453,8 @@ def main_entrypoint(
         run_program(
             phone_numbers,
             usernames,
-            usernames_file,     # <-- новый
-            usernames_column,   # <-- новый
+            usernames_file,
+            usernames_column,
             api_id,
             api_hash,
             api_phone_number,
@@ -501,7 +501,7 @@ async def run_program(
             if username not in results:
                 results[username] = await get_user_by_username(client, username, download_profile_photos)
                 await asyncio.sleep(2)
-                show_results(output, results)  # сохраняем после каждого
+                show_results(output, results)
 
     if not phone_numbers and not combined_usernames:
         choice = input("Search by (p)hone numbers or (u)sernames? [p/u]: ").lower()
