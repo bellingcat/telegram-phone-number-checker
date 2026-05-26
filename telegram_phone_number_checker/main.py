@@ -5,16 +5,46 @@ from pathlib import Path
 import re
 from getpass import getpass
 import logging
+import csv
 
 import click
 from dotenv import load_dotenv
 from telethon.sync import TelegramClient, errors, functions
 from telethon.tl import types
+from telethon.errors import FloodWaitError
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
+def load_usernames_from_csv(filepath: str, column: str | None = None) -> str:
+    """Load usernames from a CSV file. 
+    
+    If column is specified, reads from that column name.
+    Otherwise uses the first column.
+    """
+    usernames = []
+    with open(filepath, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None:
+            raise ValueError("CSV file appears to be empty.")
+        
+        col = column or reader.fieldnames[0]
+        if col not in reader.fieldnames:
+            raise ValueError(f"Column '{col}' not found in CSV. Available: {list(reader.fieldnames)}")
+        
+        seen = set()
+        for row in reader:
+            value = row[col].strip()
+            if value and value not in seen:
+                seen.add(value)
+                usernames.append(value)
+    
+    if not usernames:
+        raise ValueError("No usernames found in the CSV file.")
+    
+    logging.info(f"Loaded {len(usernames)} username(s) from '{filepath}' (column: '{col}')")
+    return ",".join(usernames)
 
 def get_human_readable_user_status(status: types.TypeUserStatus):
     match status:
@@ -220,7 +250,10 @@ async def get_user_by_username(
                     "error": f"@{clean_username} returned an unexpected entity type: {type(entity).__name__}"
                 }
             )
-            
+    except FloodWaitError as e:
+        logging.warning("FloodWait: ждём %d секунд...", e.seconds)
+        await asyncio.sleep(e.seconds)
+        result.update({"error": f"FloodWait {e.seconds}s, попробуйте позже."})
     except errors.UsernameNotOccupiedError:
         result.update({"error": f"Username @{clean_username} does not exist on Telegram."})
     except errors.UsernameInvalidError:
@@ -258,9 +291,6 @@ async def validate_users(
 async def validate_usernames(
     client: TelegramClient, usernames: str, download_profile_photos: bool
 ) -> dict:
-    """
-    Take in a string of comma separated usernames and try to get the user information associated with each username.
-    """
     if not usernames or not len(usernames):
         usernames = input("Enter the usernames to check, separated by commas: ")
     result = {}
@@ -269,6 +299,7 @@ async def validate_usernames(
         for username in username_list:
             if username not in result:
                 result[username] = await get_user_by_username(client, username, download_profile_photos)
+                await asyncio.sleep(2)  # пауза 2 секунды между запросами
     except Exception as e:
         logging.error(e)
         raise
@@ -325,6 +356,19 @@ def show_results(output: str, res: dict) -> None:
     type=str,
 )
 @click.option(
+    "--usernames-file",
+    "-f",
+    help="Path to a CSV file containing usernames to check",
+    type=click.Path(exists=True, readable=True),
+    default=None,
+)
+@click.option(
+    "--usernames-column",
+    help="Column name in the CSV file to read usernames from (defaults to first column)",
+    type=str,
+    default=None,
+)
+@click.option(
     "--api-id",
     help="Your Telegram app api_id",
     type=str,
@@ -366,6 +410,8 @@ def show_results(output: str, res: dict) -> None:
 def main_entrypoint(
     phone_numbers: str,
     usernames: str,
+    usernames_file: str,
+    usernames_column: str,
     api_id: str,
     api_hash: str,
     api_phone_number: str,
@@ -407,6 +453,8 @@ def main_entrypoint(
         run_program(
             phone_numbers,
             usernames,
+            usernames_file,     # <-- новый
+            usernames_column,   # <-- новый
             api_id,
             api_hash,
             api_phone_number,
@@ -419,6 +467,8 @@ def main_entrypoint(
 async def run_program(
     phone_numbers: str,
     usernames: str,
+    usernames_file: str,
+    usernames_column: str,
     api_id: str,
     api_hash: str,
     api_phone_number: str,
@@ -438,21 +488,29 @@ async def run_program(
         results.update(phone_results)
     
     # Search by usernames if provided
+    all_usernames_parts = []
     if usernames:
-        username_results = await validate_usernames(client, usernames, download_profile_photos)
-        results.update(username_results)
-    
-    # If neither provided, prompt for input
-    if not phone_numbers and not usernames:
+        all_usernames_parts.append(usernames)
+    if usernames_file:
+        all_usernames_parts.append(load_usernames_from_csv(usernames_file, usernames_column))
+    combined_usernames = ",".join(all_usernames_parts) or None
+
+    if combined_usernames:
+        username_list = [u.strip() for u in combined_usernames.split(",")]
+        for username in username_list:
+            if username not in results:
+                results[username] = await get_user_by_username(client, username, download_profile_photos)
+                await asyncio.sleep(2)
+                show_results(output, results)  # сохраняем после каждого
+
+    if not phone_numbers and not combined_usernames:
         choice = input("Search by (p)hone numbers or (u)sernames? [p/u]: ").lower()
         if choice == 'u':
             usernames = input("Enter the usernames to check, separated by commas: ")
-            username_results = await validate_usernames(client, usernames, download_profile_photos)
-            results.update(username_results)
+            results.update(await validate_usernames(client, usernames, download_profile_photos))
         else:
             phone_numbers = input("Enter the phone numbers to check, separated by commas: ")
-            phone_results = await validate_users(client, phone_numbers, download_profile_photos)
-            results.update(phone_results)
+            results.update(await validate_users(client, phone_numbers, download_profile_photos))
     
     show_results(output, results)
     client.disconnect()

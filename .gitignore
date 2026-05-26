@@ -13,3 +13,5 @@ __pycache__/
 # Images downloaded
 *.jpg
 *.jpeg
+venv
+*.csv
