@@ -248,15 +248,15 @@ files = [
 name = "pysocks"
 version = "1.7.1"
 description = "A Python SOCKS client module. See https://github.com/Anorov/PySocks for more information."
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-groups = ["main"]
-markers = "extra == \"proxy\""
+groups = ["main", "dev"]
 files = [
     {file = "PySocks-1.7.1-py27-none-any.whl", hash = "sha256:08e69f092cc6dbe92a0fdd16eeb9b9ffbc13cadfe5ca4c7bd92ffb078b293299"},
     {file = "PySocks-1.7.1-py3-none-any.whl", hash = "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5"},
     {file = "PySocks-1.7.1.tar.gz", hash = "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0"},
 ]
+markers = {main = "extra == \"proxy\""}
 
 [[package]]
 name = "pytest"
@@ -373,4 +373,4 @@ proxy = ["PySocks"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9"
-content-hash = "fda4cbbb0837a7127c5fe17d7fdeadc3d8f2c3c1b1f88f833d5df6ca7e54bf2c"
+content-hash = "616a4e2761cc89e108237ff56dc7387e3ef8af6badc454ec3fb3e164c69bc272"

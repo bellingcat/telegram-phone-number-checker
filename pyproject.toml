@@ -36,6 +36,7 @@ proxy = ["PySocks"]
 pytest = "^8.1.1"
 black = "24.3.0"
 isort = "^5.13.2"
+PySocks = "^1.7.1"
 
 [build-system]
 requires = ["poetry-core"]
