@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import re
 from getpass import getpass
+from urllib.parse import urlsplit
 import logging
 
 import click
@@ -275,8 +276,48 @@ async def validate_usernames(
     return result
 
 
+def parse_proxy(proxy_url: str):
+    """Parse a proxy URL (e.g. 'socks5://user:pass@host:1080') into the tuple
+    Telethon/PySocks expects. Requires the optional PySocks dependency
+    (`pip install telegram-phone-number-checker[proxy]`).
+    """
+    try:
+        import socks
+    except ImportError as e:
+        raise click.ClickException(
+            "Proxy support requires PySocks. Install it with: "
+            "pip install telegram-phone-number-checker[proxy]"
+        ) from e
+
+    parsed = urlsplit(proxy_url)
+    scheme_to_type = {
+        "socks5": socks.SOCKS5,
+        "socks4": socks.SOCKS4,
+        "http": socks.HTTP,
+    }
+    if parsed.scheme not in scheme_to_type:
+        raise click.ClickException(
+            f"Unsupported proxy scheme '{parsed.scheme}'. Use socks5://, socks4://, or http://."
+        )
+    if not parsed.hostname or not parsed.port:
+        raise click.ClickException(
+            "Proxy URL must include a host and port, e.g. socks5://host:1080"
+        )
+    return (
+        scheme_to_type[parsed.scheme],
+        parsed.hostname,
+        parsed.port,
+        True,
+        parsed.username,
+        parsed.password,
+    )
+
+
 async def login(
-    api_id: str | None, api_hash: str | None, phone_number: str | None
+    api_id: str | None,
+    api_hash: str | None,
+    phone_number: str | None,
+    proxy: str | None = None,
 ) -> TelegramClient:
     """Create a telethon session or reuse existing one"""
     logging.info("Logging in...")
@@ -285,7 +326,10 @@ async def login(
     PHONE_NUMBER = (
         phone_number or os.getenv("PHONE_NUMBER") or input("Enter your phone number: ")
     )
-    client = TelegramClient(PHONE_NUMBER, API_ID, API_HASH)
+    PROXY = proxy or os.getenv("PROXY")
+    client = TelegramClient(
+        PHONE_NUMBER, API_ID, API_HASH, proxy=parse_proxy(PROXY) if PROXY else None
+    )
     await client.connect()
     if not await client.is_user_authorized():
         await client.send_code_request(PHONE_NUMBER)
@@ -357,6 +401,17 @@ def show_results(output: str, res: dict) -> None:
     type=str,
 )
 @click.option(
+    "--proxy",
+    help=(
+        "Proxy URL to connect through, e.g. socks5://user:pass@host:1080 "
+        "(requires the optional 'proxy' extra: pip install telegram-phone-number-checker[proxy])"
+    ),
+    type=str,
+    default=None,
+    envvar="PROXY",
+    show_envvar=True,
+)
+@click.option(
     "--download-profile-photos",
     help="Download the user profile photo associated with requested Telegram account",
     is_flag=True,
@@ -370,6 +425,7 @@ def main_entrypoint(
     api_hash: str,
     api_phone_number: str,
     output: str,
+    proxy: str | None,
     download_profile_photos: bool,
 ) -> None:
     """
@@ -412,6 +468,7 @@ def main_entrypoint(
             api_phone_number,
             output,
             download_profile_photos,
+            proxy,
         )
     )
 
@@ -424,11 +481,12 @@ async def run_program(
     api_phone_number: str,
     output: str,
     download_profile_photos: bool = False,
+    proxy: str | None = None,
 ):
     """
     Get all args passed from Click parser, pass them into the script.
     """
-    client = await login(api_id, api_hash, api_phone_number)
+    client = await login(api_id, api_hash, api_phone_number, proxy)
     
     results = {}
     

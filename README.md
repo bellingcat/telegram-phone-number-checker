@@ -83,6 +83,20 @@ telegram-phone-number-checker --usernames johndoe --download-profile-photos
 
 The result will be written to the console but also written as JSON to a `results.json` file, you can write it to another file by adding `--output your_filename.json` to the command.
 
+### Connecting through a proxy
+
+If you need to connect through a SOCKS5/SOCKS4/HTTP proxy (for example, to avoid
+using a known VPN/datacenter IP - see the warning above), install the optional
+`proxy` extra and pass `--proxy`:
+
+```bash
+pip install telegram-phone-number-checker[proxy]
+
+telegram-phone-number-checker --phone-numbers +1234567890 --proxy socks5://user:pass@127.0.0.1:1080
+```
+
+The proxy can also be set via the `PROXY` environment variable or in your `.env` file.
+
 For each phone number or username, you can expect the following possible responses:
 
 1. If available, you will receive the Telegram Username, Name, and ID that are connected with this number.
