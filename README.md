@@ -6,6 +6,59 @@
 
 Python tool/script to check if phone numbers are connected to Telegram accounts. Retrieving username, name, and IDs where available.
 
+## Local web interface
+
+The project also includes a small local web interface for checking a pasted batch of phone numbers. It has no external web dependencies.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env
+```
+
+Fill `API_ID`, `API_HASH`, and `PHONE_NUMBER` in `.env`, then start it:
+
+```bash
+TELEGRAM_VALIDATOR_PORT=8010 .venv/bin/python -m telegram_phone_number_checker.web
+```
+
+Open [http://127.0.0.1:8010](http://127.0.0.1:8010) and authorize the single Telegram user account in the browser: enter the account phone number, the Telegram login code, and the 2FA password if requested. The web worker reuses this persistent user session; it does not use a bot account. Login itself never starts or resumes a validation job.
+
+Paste companies and phone numbers, then click **Поставить в очередь**. The list remains staged until **Запустить обработку** is pressed. The page shows the current outcome summary, phase, row statuses, waiting reason, next scheduled import attempt and CSV export; set `TELEGRAM_VALIDATOR_PORT` to another free port if needed.
+
+The first launch migrates a previous `.validator-jobs.json` queue into `.validator.db` without changing the JSON source. Migrated JSON jobs remain `STAGED` until you explicitly start them. The SQLite database contains phone numbers and is intentionally ignored by Git.
+
+### Reading results and resuming work
+
+- **Подтверждено API** counts `FOUND` and `FOUND_NO_USERNAME`: Telegram returned an account. Manual confirmation does not increase this count.
+- **API не определил из-за приватности** counts `UNRESOLVABLE_OR_PRIVACY`: the API did not establish a phone match. Privacy restrictions may cause this result; it does not prove the account is absent. Open the phone profile link yourself and use **Подтвердить вручную** only after verifying the chat. This records `MANUAL_CHAT_CONFIRMED` separately while preserving the API result.
+- **Повторный импорт ожидают** counts `PENDING_RETRY`. Telegram's deferred imports stay queued for another import with a stored retry schedule. **Ожидают импорта** counts other pending or active import rows. Retries, unknown outcomes, authorization waits and FloodWait suppress the completion ETA; the page shows the saved reason and available next-attempt schedule instead.
+- **Требуется повторная авторизация** shows unfinished rows in a `WAITING_AUTHORIZATION` job. This is a wait indicator and can overlap the pending and unknown counts. Authorize again in the browser, then explicitly press **Возобновить после авторизации** on the job page. The control becomes available only when the session is `AUTHORIZED`; entering a code or password never resumes the queue.
+- `UNKNOWN_OUTCOME_REVIEW` means a dispatched request may have succeeded but its response was lost, including after a restart. Pause the job and wait until active requests finish. After checking the saved evidence, **Разрешить повтор проверок с неизвестным результатом** explicitly returns the affected phone rows to delayed import. A repeated request may repeat Telegram-side effects. The job remains paused and requires a separate resume. Unknown cleanup requests remain quarantined; this phone requeue action does not retry them.
+
+For old direct-lookup rows, pause the job and wait until active requests finish, then use **Вернуть старые прямые проверки в очередь импорта**. It migrates eligible unconfirmed rows, preserves prior attempts and confirmed results, and keeps the job paused. Resume only after reviewing the results. Every row's current API status and manual confirmation remain available in the CSV.
+
+## Personal Docker container
+
+To run the service only when you need it, use the `tg-validatorForSelf` container. Docker stores the Telegram session and validator queue in its named volume, so they remain available after the container is stopped.
+
+```bash
+docker compose up --build
+```
+
+Then open [http://127.0.0.1:8010](http://127.0.0.1:8010), enter the Telegram account number, then the Telegram login code, and, if enabled, the two-factor password. The login phone, code, and password are used only for the active authorization flow and are not saved in the queue or CSV. Stop and resume the container with:
+
+```bash
+docker compose stop
+docker compose start
+```
+
+Keep the named volume to preserve the user session, queued rows and audit history. On restart the same authorized session is reused. Paused, staged and authorization-waiting jobs still require their explicit start/resume control. A request whose outcome became unknown is retained for operator review rather than retried automatically.
+
+Use `TG_VALIDATOR_PORT=8011 docker compose up` if local port 8010 is already occupied.
+
+The legacy CLI status `NOT_FOUND_OR_PRIVACY_RESTRICTED` likewise means Telegram did not return a contact match. It does not prove account absence.
+
 > ⚠️ NB: We advise you **not to use your personal account** for automations as telegram may block it. A fresh account works best from residential IPs rather than known VPN IPs.
  
 ## Installation

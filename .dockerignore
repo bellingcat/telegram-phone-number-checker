@@ -1,0 +1,17 @@
+.env
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+*.session
+*.session-journal
+*.json
+*.db
+*.db-shm
+*.db-wal
+tests
+docs
+dist
+*.jpg
+*.jpeg

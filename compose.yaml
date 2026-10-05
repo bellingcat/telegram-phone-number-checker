@@ -1,0 +1,25 @@
+services:
+  tg-validator:
+    container_name: tg-validatorForSelf
+    image: tg-validator-for-self:local
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      TELEGRAM_VALIDATOR_HOST: 0.0.0.0
+      TELEGRAM_VALIDATOR_PORT: "8010"
+      TELEGRAM_VALIDATOR_DATA_DIR: /data
+      TELEGRAM_SESSION_PATH: /data/telegram-session
+    ports:
+      - "127.0.0.1:${TG_VALIDATOR_PORT:-8010}:8010"
+    volumes:
+      - tg-validatorForSelf_data:/data
+    stdin_open: true
+    tty: true
+    stop_grace_period: 10s
+    restart: "no"
+
+volumes:
+  tg-validatorForSelf_data:
+    name: tg-validatorForSelf_data

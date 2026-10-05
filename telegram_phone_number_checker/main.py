@@ -17,6 +17,11 @@ logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
 
+def get_session_name(phone_number: str) -> str:
+    """Keep the Telethon authorization file in a caller-selected durable location."""
+    return os.getenv("TELEGRAM_SESSION_PATH") or phone_number
+
+
 def get_human_readable_user_status(status: types.TypeUserStatus):
     match status:
         case types.UserStatusOnline():
@@ -136,6 +141,115 @@ async def get_names(
         raise
     logging.info("Done.")
     return result
+
+
+async def resolve_phone(client: TelegramClient, phone_number: str) -> dict:
+    """Resolve one phone without adding it to the local Telegram contacts."""
+    try:
+        resolved = await client(functions.contacts.ResolvePhoneRequest(phone_number))
+    except (errors.PhoneNotOccupiedError, errors.UserPrivacyRestrictedError):
+        return {
+            "error": "No response, the phone number is not on Telegram or has blocked phone lookup."
+        }
+
+    user = next(iter(resolved.users), None)
+    if user is None:
+        return {
+            "error": "No response, the phone number is not on Telegram or has blocked phone lookup."
+        }
+    return {
+        "id": user.id,
+        "username": user.username,
+        "usernames": [u.username for u in (user.usernames or [])]
+        if user.usernames
+        else None,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "fake": user.fake,
+        "verified": user.verified,
+        "premium": user.premium,
+        "mutual_contact": user.mutual_contact,
+        "bot": user.bot,
+        "bot_chat_history": user.bot_chat_history,
+    }
+
+
+async def get_names_batch(
+    client: TelegramClient, phone_numbers: list[str], *, cleanup_contacts: bool = True
+) -> dict[str, dict]:
+    """Check a small phone-number batch with one contacts.importContacts request.
+
+    Durable callers pass ``cleanup_contacts=False`` so the worker can persist
+    cleanup work before issuing ``DeleteContactsRequest``. The interactive CLI
+    retains its immediate cleanup behaviour.
+    """
+    contacts = [
+        types.InputPhoneContact(
+            client_id=index,
+            phone=phone_number,
+            first_name="",
+            last_name="",
+        )
+        for index, phone_number in enumerate(phone_numbers, start=1)
+    ]
+    imported_contacts = await client(functions.contacts.ImportContactsRequest(contacts))
+    imported_user_ids = {
+        contact.client_id: contact.user_id for contact in imported_contacts.imported
+    }
+    users_by_id = {user.id: user for user in imported_contacts.users}
+    retry_contact_ids = set(imported_contacts.retry_contacts)
+    results = {}
+    imported_user_ids_to_delete = []
+
+    for index, phone_number in enumerate(phone_numbers, start=1):
+        user_id = imported_user_ids.get(index)
+        user = users_by_id.get(user_id)
+        if user is None:
+            message = (
+                "Telegram asked to retry this contact later."
+                if index in retry_contact_ids
+                else "No response, the phone number is not on Telegram or has blocked contact adding."
+            )
+            results[phone_number] = {
+                "error": message,
+                "retry": index in retry_contact_ids,
+            }
+            continue
+
+        imported_user_ids_to_delete.append(user_id)
+        results[phone_number] = {
+            "id": user.id,
+            "username": user.username,
+            "usernames": [u.username for u in (user.usernames or [])]
+            if user.usernames
+            else None,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "fake": user.fake,
+            "verified": user.verified,
+            "premium": user.premium,
+            "mutual_contact": user.mutual_contact,
+            "bot": user.bot,
+            "bot_chat_history": user.bot_chat_history,
+            "restricted": user.restricted,
+            "restriction_reason": user.restriction_reason,
+            "user_was_online": get_human_readable_user_status(user.status),
+            "phone": user.phone,
+        }
+        if not cleanup_contacts:
+            # Private worker metadata. It is intentionally not rendered or
+            # exported; QueueStore turns it into durable cleanup work.
+            results[phone_number]["_cleanup_contact_id"] = user_id
+
+    if cleanup_contacts:
+        await cleanup_imported_contacts(client, imported_user_ids_to_delete)
+    return results
+
+
+async def cleanup_imported_contacts(client: TelegramClient, user_ids: list[int]) -> None:
+    """Remove contacts imported by this validator request, if there are any."""
+    if user_ids:
+        await client(functions.contacts.DeleteContactsRequest(id=user_ids))
 
 
 async def get_user_by_username(
@@ -328,7 +442,11 @@ async def login(
     )
     PROXY = proxy or os.getenv("PROXY")
     client = TelegramClient(
-        PHONE_NUMBER, API_ID, API_HASH, proxy=parse_proxy(PROXY) if PROXY else None
+        get_session_name(PHONE_NUMBER),
+        API_ID,
+        API_HASH,
+        proxy=parse_proxy(PROXY) if PROXY else None,
+        flood_sleep_threshold=0,
     )
     await client.connect()
     if not await client.is_user_authorized():
