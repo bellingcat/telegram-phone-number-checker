@@ -27,6 +27,15 @@ pip install -r requirements.txt
 python telegram-phone-number-checker/main.py
 ```
 
+You can also install it on Linux with [OTinstaller](https://github.com/OSINTVerseHQ/OTinstaller), a third-party tool manager that installs the PyPI release into its own virtualenv. It isn't maintained by Bellingcat, so please report problems with it [on the OTinstaller tracker](https://github.com/OSINTVerseHQ/OTinstaller/issues). You still need the Telegram account and API keys described below. OTinstaller passes `API_ID`, `API_HASH` and `PHONE_NUMBER` to the tool from `~/.otinstaller/.env`.
+
+```bash
+pipx install otinstaller
+otinstaller init
+otinstaller install telegram-phone-number-checker
+otinstaller run telegram-phone-number-checker -- --phone-numbers +1234567890   # same as telegram-phone-number-checker --phone-numbers +1234567890
+```
+
 ## Requirements
 To run it, you need:
 
