@@ -45,3 +45,13 @@ def test_rejects_unsupported_scheme():
 def test_rejects_missing_port():
     with pytest.raises(Exception, match="host and port"):
         main.parse_proxy("socks5://proxy.example.com")
+
+
+def test_rejects_non_numeric_port():
+    with pytest.raises(Exception, match="port must be a number"):
+        main.parse_proxy("socks5://proxy.example.com:notaport")
+
+
+def test_rejects_out_of_range_port():
+    with pytest.raises(Exception, match="port must be a number"):
+        main.parse_proxy("socks5://proxy.example.com:99999")

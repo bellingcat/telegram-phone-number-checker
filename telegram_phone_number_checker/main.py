@@ -299,14 +299,20 @@ def parse_proxy(proxy_url: str):
         raise click.ClickException(
             f"Unsupported proxy scheme '{parsed.scheme}'. Use socks5://, socks4://, or http://."
         )
-    if not parsed.hostname or not parsed.port:
+    try:
+        port = parsed.port
+    except ValueError:
+        raise click.ClickException(
+            "Proxy port must be a number between 0 and 65535, e.g. socks5://host:1080"
+        ) from None
+    if not parsed.hostname or not port:
         raise click.ClickException(
             "Proxy URL must include a host and port, e.g. socks5://host:1080"
         )
     return (
         scheme_to_type[parsed.scheme],
         parsed.hostname,
-        parsed.port,
+        port,
         True,
         parsed.username,
         parsed.password,
